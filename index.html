@@ -620,6 +620,8 @@
 
     // Create empty assistant message bubble to stream into
     const textDiv = addMessage('assistant', '');
+    let fullText = '';
+    let outputTokens = 0;
 
     // Build API messages: system + all prior messages (excluding the empty assistant placeholder)
     const apiMessages = [
@@ -668,20 +670,22 @@
             const json = JSON.parse(data);
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) {
-              textDiv.textContent += delta;
+              fullText += delta;
+              textDiv.textContent = fullText;
               scrollToBottom();
             }
             if (json.usage) {
-              state.tokenCount += json.usage.completion_tokens || 0;
+              outputTokens = json.usage.completion_tokens || 0;
             }
-          } catch(e) {}
+          } catch(e) { console.warn('SSE parse error', e); }
         }
       }
 
       // Update stored message with full response text
-      state.messages[state.messages.length - 1].content = textDiv.textContent;
+      state.messages[state.messages.length - 1].content = fullText;
 
-      // Update token display
+      // Update token count once after stream (use character fallback if no token count)
+      state.tokenCount += outputTokens || Math.ceil(fullText.length / 4);
       document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
       document.getElementById('statTokens').textContent = state.tokenCount;
 
