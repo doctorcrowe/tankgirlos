@@ -381,7 +381,6 @@
     type: 'emoji',      // 'emoji' | 'image' | 'spritesheet'
     emoji: '🤘',
     imageData: null,    // base64 data URL
-    spriteSheet: false,
     frameWidth: 64,
     frameHeight: 64,
     fps: 8,
@@ -401,7 +400,6 @@
     reader.onload = ev => {
       avatarState.imageData = ev.target.result;
       avatarState.type = 'image';
-      avatarState.spriteSheet = false;
       renderAvatar();
       showSpriteSheetControls(true);
     };
@@ -411,6 +409,11 @@
   });
 
   function renderAvatar() {
+    // Always clear any running spritesheet interval before rebuilding
+    if (avatarState._sheetInterval) {
+      clearInterval(avatarState._sheetInterval);
+      avatarState._sheetInterval = null;
+    }
     const container = document.getElementById('spriteContainer');
     // Clear existing sprite (keep the glow div)
     const glow = document.getElementById('spriteGlow');
@@ -428,7 +431,7 @@
       return;
     }
 
-    if (avatarState.type === 'image' && !avatarState.spriteSheet) {
+    if (avatarState.type === 'image') {
       const img = document.createElement('img');
       img.className = 'sprite-img';
       img.id = 'spriteImg';
@@ -440,17 +443,13 @@
     }
 
     if (avatarState.type === 'spritesheet') {
-      if (avatarState._sheetInterval) {
-        clearInterval(avatarState._sheetInterval);
-        avatarState._sheetInterval = null;
-      }
       const el = document.createElement('div');
       el.className = 'sprite-sheet';
       el.id = 'spriteSheet';
       el.title = 'Click to upload new avatar';
       el.style.width = avatarState.frameWidth + 'px';
       el.style.height = avatarState.frameHeight + 'px';
-      el.style.backgroundImage = `url(${avatarState.imageData})`;
+      el.style.backgroundImage = `url("${avatarState.imageData}")`;
       el.style.backgroundPosition = '0px 0px';
       el.addEventListener('click', () => document.getElementById('avatarFileInput').click());
       container.appendChild(el);
