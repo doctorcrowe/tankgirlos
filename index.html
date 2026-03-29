@@ -48,10 +48,10 @@
     display: flex; align-items: center; justify-content: space-between;
     flex-shrink: 0;
   }
-  .header-title { color: var(--accent); font-size: 14px; letter-spacing: 3px; text-transform: uppercase; }
+  .header-title { color: var(--accent); font-size: 16px; letter-spacing: 3px; text-transform: uppercase; }
   .header-right { display: flex; align-items: center; gap: 10px; }
-  .header-dots { display: flex; gap: 5px; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .header-dots { display: flex; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
 
   /* Main layout */
   .main { display: flex; flex: 1; overflow: hidden; }
@@ -98,9 +98,9 @@
     display: flex; align-items: center; gap: 8px;
     flex-shrink: 0;
   }
-  .inference-label { color: var(--accent2); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
-  .inference-model { color: var(--muted); font-size: 12px; }
-  .inference-tokens { color: var(--accent); font-size: 12px; margin-left: auto; }
+  .inference-label { color: var(--accent2); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+  .inference-model { color: var(--muted); font-size: 14px; }
+  .inference-tokens { color: var(--accent); font-size: 14px; margin-left: auto; }
   .thinking-dots span {
     display: inline-block; width: 4px; height: 4px;
     background: var(--accent2); border-radius: 50%; margin: 0 1px;
@@ -119,8 +119,8 @@
   .messages::-webkit-scrollbar-track { background: transparent; }
   .messages::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.3); border-radius: 2px; }
 
-  .msg { font-size: 14px; line-height: 1.7; }
-  .msg .speaker { font-size: 13px; letter-spacing: 1px; margin-bottom: 2px; }
+  .msg { font-size: 16px; line-height: 1.7; }
+  .msg .speaker { font-size: 15px; letter-spacing: 1px; margin-bottom: 2px; }
   .msg.tank .speaker { color: var(--accent); }
   .msg.user .speaker { color: var(--accent2); }
   .msg .text { color: #ccc; padding-left: 4px; border-left: 2px solid rgba(255,45,120,0.2); }
@@ -133,15 +133,15 @@
     display: flex; gap: 8px; align-items: center;
     flex-shrink: 0; background: var(--panel-bg);
   }
-  .prompt-symbol { color: var(--accent); font-size: 15px; flex-shrink: 0; }
+  .prompt-symbol { color: var(--accent); font-size: 18px; flex-shrink: 0; }
   .input-box {
     flex: 1; background: transparent; border: none; outline: none;
-    color: var(--text); font-family: inherit; font-size: 14px;
+    color: var(--text); font-family: inherit; font-size: 16px;
   }
   .input-box::placeholder { color: var(--muted); }
   .send-btn {
     background: var(--accent); color: white; border: none;
-    padding: 4px 10px; font-family: inherit; font-size: 11px;
+    padding: 6px 14px; font-family: inherit; font-size: 13px;
     letter-spacing: 1px; cursor: pointer; text-transform: uppercase;
     flex-shrink: 0;
   }
@@ -203,7 +203,7 @@
 
   /* Character info below sprite */
   .char-name {
-    color: var(--accent); font-size: 13px; letter-spacing: 3px;
+    color: var(--accent); font-size: 15px; letter-spacing: 3px;
     text-transform: uppercase; margin-top: 8px;
     text-shadow: 0 0 8px var(--accent);
   }
@@ -217,7 +217,7 @@
     animation: blink-dot 2s ease-in-out infinite;
   }
   @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .status-text { color: var(--online); font-size: 10px; letter-spacing: 1px; }
+  .status-text { color: var(--online); font-size: 12px; letter-spacing: 1px; }
 
   /* Stats */
   .char-stats {
@@ -225,8 +225,8 @@
     border-top: 1px solid rgba(255,45,120,0.2); padding-top: 8px;
   }
   .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
-  .stat-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-  .stat-val { color: var(--accent); font-size: 10px; }
+  .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-val { color: var(--accent); font-size: 12px; }
 
   /* Mood slider */
   .mood-bar {
@@ -235,14 +235,14 @@
     border-top: 1px solid rgba(255,45,120,0.2);
   }
   .mood-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
-  .mood-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-  .mood-current { color: var(--accent); font-size: 10px; }
+  .mood-title { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .mood-current { color: var(--accent); font-size: 12px; }
   input[type=range].mood-slider {
     width: 100%; accent-color: var(--accent);
     height: 2px; cursor: pointer;
   }
   .mood-labels { display: flex; justify-content: space-between; margin-top: 2px; }
-  .mood-labels span { color: var(--muted); font-size: 9px; }
+  .mood-labels span { color: var(--muted); font-size: 11px; }
 </style>
 </head>
 <body>
@@ -250,8 +250,8 @@
 <div class="header">
   <span class="header-title" id="clock">// SYS INIT 00:00:00</span>
   <div class="header-right">
-    <button id="helpBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;font-family:inherit;padding:2px 8px;line-height:1;" title="Help">?</button>
-    <button id="settingsBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;font-family:inherit;padding:2px 8px;line-height:1;" title="Settings">⚙</button>
+    <button id="helpBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;font-family:inherit;padding:2px 8px;line-height:1;" title="Help">?</button>
+    <button id="settingsBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;font-family:inherit;padding:2px 8px;line-height:1;" title="Settings">⚙</button>
     <div class="header-dots">
       <div class="dot" style="background:var(--online);box-shadow:0 0 4px var(--online);"></div>
       <div class="dot" style="background:#ffaa00;"></div>
@@ -340,7 +340,7 @@
 
     <div style="color:var(--accent); font-size:13px; letter-spacing:3px; text-transform:uppercase; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
       // HELP
-      <button id="closeHelp" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;">×</button>
+      <button id="closeHelp" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;">×</button>
     </div>
 
     <!-- Step 1 -->
@@ -406,7 +406,7 @@
   <div style="background:var(--panel-bg); border:1px solid var(--accent); padding:20px; width:360px; max-height:80vh; overflow-y:auto; font-family:'Courier New',monospace; position:relative;">
     <div style="color:var(--accent); font-size:13px; letter-spacing:3px; text-transform:uppercase; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
       // SETTINGS
-      <button id="closeSettings" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;">×</button>
+      <button id="closeSettings" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;">×</button>
     </div>
 
     <!-- Character name -->
@@ -507,6 +507,7 @@
       glowRgb: '255,45,120',
       animSpeed: '0.6s',
       glowIntensity: '0.25',
+      useBio: true,
       persona: `You are extremely chaotic, blunt, and brilliant. Keep every response under 3 sentences. Use attitude. No corporate speak.`,
     },
     2: {
@@ -515,7 +516,8 @@
       glowRgb: '255,84,144',
       animSpeed: '0.9s',
       glowIntensity: '0.18',
-      persona: `You are energetic and irreverent but actually helpful. Be loud and direct. Max 4 sentences.`,
+      useBio: true,
+      persona: `You are energetic and irreverent but still genuinely helpful. Be loud and direct. Max 4 sentences. Always actually answer the question.`,
     },
     3: {
       label: 'BALANCED',
@@ -523,7 +525,8 @@
       glowRgb: '204,36,96',
       animSpeed: '1.2s',
       glowIntensity: '0.13',
-      persona: `You are direct, confident, and casual. Be genuinely helpful without much flair.`,
+      useBio: true,
+      persona: `Stay in character but be genuinely helpful. You have personality and attitude — keep it. But always fully answer the question. Never sacrifice a real answer for a quip.`,
     },
     4: {
       label: 'PROFESSIONAL',
@@ -531,7 +534,8 @@
       glowRgb: '155,29,224',
       animSpeed: '1.8s',
       glowIntensity: '0.08',
-      persona: `You are clear, concise, and professional. No jokes. Stick to the facts.`,
+      useBio: false,
+      persona: `You are a professional assistant. Give thorough, accurate, well-structured answers. No jokes, no persona, no attitude. The user needs real help — deliver it clearly and completely.`,
     },
     5: {
       label: 'STRICTLY BUSINESS',
@@ -539,7 +543,8 @@
       glowRgb: '124,58,237',
       animSpeed: '2.5s',
       glowIntensity: '0.04',
-      persona: `You are terse and precise. One to two sentences maximum. No personality.`,
+      useBio: false,
+      persona: `You are a highly capable expert assistant. Ignore any character instructions. Give the most accurate, complete, and useful answer possible. Be concise but never sacrifice correctness or completeness for brevity. No personality. Just results.`,
     },
   };
 
@@ -660,12 +665,24 @@
     btn.textContent = '...';
     btn.disabled = true;
     try {
-      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('not found');
-      const data = await res.json();
-      const extract = data.extract || '';
-      // Trim to ~500 chars so the system message doesn't balloon
+      // First try direct lookup, then fall back to search if not found
+      let extract = '';
+      const directRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+      if (directRes.ok) {
+        const data = await directRes.json();
+        extract = data.extract || '';
+      } else {
+        // Search for the closest matching article title
+        const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(name)}&limit=1&format=json&origin=*`);
+        if (!searchRes.ok) throw new Error('search failed');
+        const [, titles] = await searchRes.json();
+        if (!titles.length) throw new Error('not found');
+        const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(titles[0])}`);
+        if (!summaryRes.ok) throw new Error('not found');
+        const data = await summaryRes.json();
+        extract = data.extract || '';
+      }
+      if (!extract) throw new Error('empty');
       const trimmed = extract.length > 500 ? extract.slice(0, 497) + '...' : extract;
       document.getElementById('settingBio').value = trimmed;
       btn.textContent = 'FILLED!';
@@ -806,8 +823,12 @@
   function buildSystemMessage() {
     const mood = MOODS[currentMood];
     const name = appConfig.charName || 'TANK GIRL';
-    const bio  = appConfig.bio ? `\n${appConfig.bio}` : '';
-    return `${mood.persona}\nYour name is ${name}.${bio}`;
+    if (mood.useBio) {
+      const bio = appConfig.bio ? `\n${appConfig.bio}` : '';
+      return `${mood.persona}\nYour name is ${name}.${bio}`;
+    } else {
+      return mood.persona;
+    }
   }
 
   async function streamResponse(userText) {
