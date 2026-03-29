@@ -599,6 +599,123 @@
     closeSettings();
   });
 
+  // --- Skin system ---
+  function buildSkin() {
+    return {
+      version: 1,
+      name: appConfig.charName,
+      bio: appConfig.bio,
+      mood: currentMood,
+      accentColor: MOODS[currentMood].accent,
+      avatar: {
+        type: avatarState.type,
+        data: avatarState.imageData,     // base64 data URL or null
+        frameWidth: avatarState.frameWidth,
+        frameHeight: avatarState.frameHeight,
+        fps: avatarState.fps,
+        totalFrames: avatarState.totalFrames,
+        emoji: avatarState.emoji,
+      },
+    };
+  }
+
+  function applySkin(skin) {
+    if (!skin || skin.version !== 1) return;
+
+    // Character name + bio
+    appConfig.charName = skin.name || 'TANK GIRL';
+    appConfig.bio = skin.bio || '';
+    document.getElementById('settingCharName').value = appConfig.charName;
+    document.getElementById('settingBio').value = appConfig.bio;
+    state.characterName = appConfig.charName.toUpperCase();
+    document.getElementById('charNameDisplay').textContent = state.characterName;
+
+    // Mood
+    if (skin.mood >= 1 && skin.mood <= 5) {
+      document.getElementById('moodSlider').value = skin.mood;
+      applyMood(skin.mood);
+    }
+
+    // Avatar
+    if (skin.avatar) {
+      avatarState.type        = skin.avatar.type || 'emoji';
+      avatarState.imageData   = skin.avatar.data || null;
+      avatarState.frameWidth  = skin.avatar.frameWidth  || 64;
+      avatarState.frameHeight = skin.avatar.frameHeight || 64;
+      avatarState.fps         = skin.avatar.fps         || 8;
+      avatarState.totalFrames = skin.avatar.totalFrames || 1;
+      avatarState.emoji       = skin.avatar.emoji       || '🤘';
+      renderAvatar();
+      if (avatarState.imageData) {
+        showSpriteSheetControls(true);
+        if (avatarState.type === 'spritesheet') {
+          document.getElementById('spriteSheetToggle').checked = true;
+          document.getElementById('spriteSheetInputs').style.display = 'block';
+          document.getElementById('frameW').value     = avatarState.frameWidth;
+          document.getElementById('frameH').value     = avatarState.frameHeight;
+          document.getElementById('frameCount').value = avatarState.totalFrames;
+          document.getElementById('frameFPS').value   = avatarState.fps;
+        }
+      }
+    }
+  }
+
+  // Wire export button
+  document.getElementById('exportSkinBtn').addEventListener('click', () => {
+    const skin = buildSkin();
+    const json = JSON.stringify(skin, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${(appConfig.charName || 'skin').toLowerCase().replace(/\s+/g,'-')}.skin.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Wire import button
+  document.getElementById('importSkinInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const skin = JSON.parse(ev.target.result);
+        applySkin(skin);
+        closeSettings();
+      } catch(err) {
+        alert('Invalid skin file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // Wire share link button
+  document.getElementById('shareLinkBtn').addEventListener('click', () => {
+    const skin = buildSkin();
+    // Never include API key in share links
+    const json = JSON.stringify(skin);
+    const b64  = btoa(unescape(encodeURIComponent(json)));
+    const url  = `${location.origin}${location.pathname}#skin=${b64}`;
+    const feedback = document.getElementById('shareFeedback');
+
+    if (url.length > 8000) {
+      feedback.style.color = '#ffaa00';
+      feedback.textContent = '⚠ Image too large for link — use Export instead.';
+      return;
+    }
+
+    navigator.clipboard.writeText(url).then(() => {
+      feedback.style.color = 'var(--online)';
+      feedback.textContent = '✓ Link copied to clipboard!';
+      setTimeout(() => { feedback.textContent = ''; }, 3000);
+    }).catch(() => {
+      feedback.style.color = 'var(--accent)';
+      feedback.textContent = 'Copy: ' + url.slice(0, 60) + '...';
+    });
+  });
+
   // --- Fireworks AI streaming ---
   function buildSystemMessage() {
     const mood = MOODS[currentMood];
@@ -873,6 +990,20 @@
 
   // Apply default mood on load
   applyMood(1);
+
+  // Load skin from URL hash (share link)
+  (function loadSkinFromURL() {
+    const hash = location.hash;
+    if (!hash.startsWith('#skin=')) return;
+    try {
+      const b64  = hash.slice(6);
+      const json = decodeURIComponent(escape(atob(b64)));
+      const skin = JSON.parse(json);
+      applySkin(skin);
+    } catch(e) {
+      console.warn('Could not parse skin from URL:', e);
+    }
+  })();
 </script>
 
 </body>
