@@ -375,7 +375,112 @@
     // AI call wired up in Task 8
     console.log('send:', text);
   }
+
+  // --- Avatar upload ---
+  const avatarState = {
+    type: 'emoji',      // 'emoji' | 'image' | 'spritesheet'
+    emoji: '🤘',
+    imageData: null,    // base64 data URL
+    spriteSheet: false,
+    frameWidth: 64,
+    frameHeight: 64,
+    fps: 8,
+    totalFrames: 1,
+    _sheetInterval: null,
+  };
+
+  // Click emoji or image to trigger upload
+  document.getElementById('spriteEmoji').addEventListener('click', () => {
+    document.getElementById('avatarFileInput').click();
+  });
+
+  document.getElementById('avatarFileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      avatarState.imageData = ev.target.result;
+      avatarState.type = 'image';
+      avatarState.spriteSheet = false;
+      renderAvatar();
+      showSpriteSheetControls(true);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  });
+
+  function renderAvatar() {
+    const container = document.getElementById('spriteContainer');
+    // Clear existing sprite (keep the glow div)
+    const glow = document.getElementById('spriteGlow');
+    container.innerHTML = '';
+    container.appendChild(glow);
+
+    if (avatarState.type === 'emoji') {
+      const el = document.createElement('span');
+      el.className = 'sprite-emoji';
+      el.id = 'spriteEmoji';
+      el.title = 'Click to upload avatar';
+      el.textContent = avatarState.emoji;
+      el.addEventListener('click', () => document.getElementById('avatarFileInput').click());
+      container.appendChild(el);
+      return;
+    }
+
+    if (avatarState.type === 'image' && !avatarState.spriteSheet) {
+      const img = document.createElement('img');
+      img.className = 'sprite-img';
+      img.id = 'spriteImg';
+      img.src = avatarState.imageData;
+      img.title = 'Click to upload new avatar';
+      img.addEventListener('click', () => document.getElementById('avatarFileInput').click());
+      container.appendChild(img);
+      return;
+    }
+
+    if (avatarState.type === 'spritesheet') {
+      if (avatarState._sheetInterval) {
+        clearInterval(avatarState._sheetInterval);
+        avatarState._sheetInterval = null;
+      }
+      const el = document.createElement('div');
+      el.className = 'sprite-sheet';
+      el.id = 'spriteSheet';
+      el.title = 'Click to upload new avatar';
+      el.style.width = avatarState.frameWidth + 'px';
+      el.style.height = avatarState.frameHeight + 'px';
+      el.style.backgroundImage = `url(${avatarState.imageData})`;
+      el.style.backgroundPosition = '0px 0px';
+      el.addEventListener('click', () => document.getElementById('avatarFileInput').click());
+      container.appendChild(el);
+
+      let frame = 0;
+      avatarState._sheetInterval = setInterval(() => {
+        frame = (frame + 1) % avatarState.totalFrames;
+        el.style.backgroundPosition = `-${frame * avatarState.frameWidth}px 0px`;
+      }, 1000 / avatarState.fps);
+      return;
+    }
+  }
+
+  // Animate sprite as "talking" while streaming
+  function setTalking(on) {
+    const targets = ['spriteEmoji', 'spriteImg', 'spriteSheet'];
+    targets.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('talking', on);
+    });
+  }
+
+  // showSpriteSheetControls is defined in Task 5 — stub it here so Task 4 upload doesn't break
+  function showSpriteSheetControls(show) {
+    const el = document.getElementById('spriteSheetControls');
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
 </script>
+
+<input type="file" id="avatarFileInput" accept="image/*" style="display:none" />
 
 </body>
 </html>
