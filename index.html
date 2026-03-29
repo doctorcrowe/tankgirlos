@@ -697,7 +697,8 @@
     const skin = buildSkin();
     // Never include API key in share links
     const json = JSON.stringify(skin);
-    const b64  = btoa(unescape(encodeURIComponent(json)));
+    const bytes = new TextEncoder().encode(json);
+    const b64   = btoa(String.fromCharCode(...bytes));
     const url  = `${location.origin}${location.pathname}#skin=${b64}`;
     const feedback = document.getElementById('shareFeedback');
 
@@ -765,7 +766,7 @@
       if (!resp.ok) {
         const err = await resp.text();
         textDiv.textContent = `⚠ API error ${resp.status}: ${err.slice(0, 120)}`;
-        state.messages[state.messages.length - 1].content = textDiv.textContent;
+        state.messages.pop(); // Remove the empty assistant placeholder — don't send errors to API history
         return;
       }
 
@@ -809,7 +810,7 @@
 
     } catch (err) {
       textDiv.textContent = `⚠ Network error: ${err.message}`;
-      state.messages[state.messages.length - 1].content = textDiv.textContent;
+      state.messages.pop(); // Remove the empty assistant placeholder — don't send errors to API history
     } finally {
       state.isStreaming = false;
       document.getElementById('sendBtn').disabled = false;
@@ -998,7 +999,9 @@
     if (!hash.startsWith('#skin=')) return;
     try {
       const b64  = hash.slice(6);
-      const json = decodeURIComponent(escape(atob(b64)));
+      const decoded = atob(b64);
+      const bytes   = Uint8Array.from(decoded, c => c.charCodeAt(0));
+      const json    = new TextDecoder().decode(bytes);
       const skin = JSON.parse(json);
       applySkin(skin);
     } catch(e) {
