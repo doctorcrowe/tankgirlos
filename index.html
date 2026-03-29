@@ -400,6 +400,7 @@
     1: {
       label: 'FERAL',
       accent: '#ff2d78',
+      glowRgb: '255,45,120',
       animSpeed: '0.6s',
       glowIntensity: '0.25',
       persona: `You are extremely chaotic, blunt, and brilliant. Keep every response under 3 sentences. Use attitude. No corporate speak. You live in a tank and you love it.`,
@@ -407,6 +408,7 @@
     2: {
       label: 'CHAOTIC',
       accent: '#ff5490',
+      glowRgb: '255,84,144',
       animSpeed: '0.9s',
       glowIntensity: '0.18',
       persona: `You are energetic and irreverent but actually helpful. Be loud and direct. Max 4 sentences.`,
@@ -414,6 +416,7 @@
     3: {
       label: 'BALANCED',
       accent: '#cc2460',
+      glowRgb: '204,36,96',
       animSpeed: '1.2s',
       glowIntensity: '0.13',
       persona: `You are direct, confident, and casual. Be genuinely helpful without much flair.`,
@@ -421,6 +424,7 @@
     4: {
       label: 'PROFESSIONAL',
       accent: '#9b1de0',
+      glowRgb: '155,29,224',
       animSpeed: '1.8s',
       glowIntensity: '0.08',
       persona: `You are clear, concise, and professional. No jokes. Stick to the facts.`,
@@ -428,6 +432,7 @@
     5: {
       label: 'STRICTLY BUSINESS',
       accent: '#7c3aed',
+      glowRgb: '124,58,237',
       animSpeed: '2.5s',
       glowIntensity: '0.04',
       persona: `You are terse and precise. One to two sentences maximum. No personality.`,
@@ -437,6 +442,7 @@
   let currentMood = 1;
 
   function applyMood(level) {
+    if (!MOODS[level]) return;
     currentMood = level;
     const m = MOODS[level];
 
@@ -449,7 +455,7 @@
     // Update glow
     const glow = document.getElementById('spriteGlow');
     if (glow) {
-      glow.style.background = `radial-gradient(ellipse, rgba(255,45,120,${m.glowIntensity}) 0%, transparent 70%)`;
+      glow.style.background = `radial-gradient(ellipse, rgba(${m.glowRgb},${m.glowIntensity}) 0%, transparent 70%)`;
     }
 
     // Update labels
