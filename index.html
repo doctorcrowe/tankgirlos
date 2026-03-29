@@ -308,6 +308,44 @@
         <span class="stat-val" id="statMood">FERAL</span>
       </div>
     </div>
+    <div id="spriteSheetControls" style="display:none; width:100%; margin-top:8px; z-index:1; border-top:1px solid rgba(255,45,120,0.2); padding-top:8px;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+        <label style="color:var(--muted);font-size:7px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;">
+          <input type="checkbox" id="spriteSheetToggle" style="margin-right:4px;" />
+          Sprite Sheet
+        </label>
+        <a href="https://www.piskelapp.com" target="_blank"
+           style="color:var(--accent2);font-size:7px;text-decoration:none;margin-left:auto;">
+          Create →
+        </a>
+      </div>
+      <div id="spriteSheetInputs" style="display:none;">
+        <div style="display:flex;gap:6px;margin-bottom:4px;">
+          <div style="flex:1;">
+            <div style="color:var(--muted);font-size:7px;margin-bottom:2px;">FRAME W</div>
+            <input id="frameW" type="number" value="64" min="8" max="512"
+              style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:9px;padding:2px 4px;" />
+          </div>
+          <div style="flex:1;">
+            <div style="color:var(--muted);font-size:7px;margin-bottom:2px;">FRAME H</div>
+            <input id="frameH" type="number" value="64" min="8" max="512"
+              style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:9px;padding:2px 4px;" />
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;">
+            <div style="color:var(--muted);font-size:7px;margin-bottom:2px;">FRAMES</div>
+            <input id="frameCount" type="number" value="4" min="1" max="64"
+              style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:9px;padding:2px 4px;" />
+          </div>
+          <div style="flex:1;">
+            <div style="color:var(--muted);font-size:7px;margin-bottom:2px;">FPS</div>
+            <input id="frameFPS" type="number" value="8" min="1" max="30"
+              style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:9px;padding:2px 4px;" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -472,10 +510,33 @@
     });
   }
 
-  // showSpriteSheetControls is defined in Task 5 — stub it here so Task 4 upload doesn't break
   function showSpriteSheetControls(show) {
-    const el = document.getElementById('spriteSheetControls');
-    if (el) el.style.display = show ? 'block' : 'none';
+    document.getElementById('spriteSheetControls').style.display = show ? 'block' : 'none';
+  }
+
+  document.getElementById('spriteSheetToggle').addEventListener('change', function() {
+    const on = this.checked;
+    document.getElementById('spriteSheetInputs').style.display = on ? 'block' : 'none';
+    if (on) {
+      applySpriteSheetSettings();
+    } else {
+      avatarState.type = 'image';
+      renderAvatar();
+    }
+  });
+
+  ['frameW','frameH','frameCount','frameFPS'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applySpriteSheetSettings);
+  });
+
+  function applySpriteSheetSettings() {
+    if (!avatarState.imageData) return;
+    avatarState.frameWidth  = parseInt(document.getElementById('frameW').value) || 64;
+    avatarState.frameHeight = parseInt(document.getElementById('frameH').value) || 64;
+    avatarState.totalFrames = parseInt(document.getElementById('frameCount').value) || 4;
+    avatarState.fps         = parseInt(document.getElementById('frameFPS').value) || 8;
+    avatarState.type = 'spritesheet';
+    renderAvatar();
   }
 </script>
 
