@@ -147,6 +147,97 @@
   }
   .send-btn:hover { background: #ff5490; }
   .send-btn:disabled { background: #444; cursor: not-allowed; }
+
+  /* Avatar sprite area */
+  .sprite-container {
+    position: relative;
+    width: 100%; flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1; min-height: 0;
+  }
+
+  .sprite-glow {
+    position: absolute;
+    width: 80px; height: 120px;
+    background: radial-gradient(ellipse, rgba(255,45,120,0.15) 0%, transparent 70%);
+    animation: glow-pulse 2s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes glow-pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+  .sprite-emoji {
+    font-size: 72px; line-height: 1;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 20px rgba(255,45,120,0.4));
+    animation: sprite-idle var(--anim-speed, 1.2s) ease-in-out infinite;
+    z-index: 1; position: relative;
+    cursor: pointer;
+  }
+  @keyframes sprite-idle {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+  .sprite-emoji.talking {
+    animation: sprite-talk 0.15s steps(1) infinite;
+  }
+  @keyframes sprite-talk {
+    0%  { transform: scaleX(1)   translateY(0); }
+    50% { transform: scaleX(0.96) translateY(-2px); }
+  }
+
+  /* Uploaded image sprite */
+  .sprite-img {
+    max-width: 100%; max-height: 140px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px var(--accent)) saturate(1.2) contrast(1.1);
+    animation: sprite-idle var(--anim-speed, 1.2s) ease-in-out infinite;
+    z-index: 1; position: relative;
+    cursor: pointer;
+    object-fit: contain;
+  }
+  .sprite-img.talking {
+    animation: sprite-talk 0.15s steps(1) infinite;
+  }
+
+  /* Sprite sheet mode: div with background-image */
+  .sprite-sheet {
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px var(--accent)) saturate(1.2) contrast(1.1);
+    animation: sprite-idle var(--anim-speed, 1.2s) ease-in-out infinite;
+    z-index: 1; position: relative;
+    cursor: pointer;
+    background-repeat: no-repeat;
+  }
+  .sprite-sheet.talking {
+    animation: sprite-talk 0.15s steps(1) infinite;
+  }
+
+  /* Character info below sprite */
+  .char-name {
+    color: var(--accent); font-size: 9px; letter-spacing: 3px;
+    text-transform: uppercase; margin-top: 8px; z-index: 1;
+    text-shadow: 0 0 8px var(--accent);
+  }
+  .char-status {
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 3px; z-index: 1;
+  }
+  .status-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--online); box-shadow: 0 0 6px var(--online);
+    animation: blink-dot 2s ease-in-out infinite;
+  }
+  @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .status-text { color: var(--online); font-size: 7px; letter-spacing: 1px; }
+
+  /* Stats */
+  .char-stats {
+    width: 100%; margin-top: 10px; z-index: 1;
+    border-top: 1px solid rgba(255,45,120,0.2); padding-top: 8px;
+  }
+  .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
+  .stat-label { color: var(--muted); font-size: 7px; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-val { color: var(--accent); font-size: 7px; }
 </style>
 </head>
 <body>
@@ -191,6 +282,32 @@
     <div class="corner tr"></div>
     <div class="corner bl"></div>
     <div class="corner br"></div>
+
+    <div class="sprite-container" id="spriteContainer">
+      <div class="sprite-glow" id="spriteGlow"></div>
+      <span class="sprite-emoji" id="spriteEmoji" title="Click to upload avatar">🤘</span>
+    </div>
+
+    <div class="char-name" id="charNameDisplay">TANK GIRL</div>
+    <div class="char-status">
+      <div class="status-dot"></div>
+      <span class="status-text" id="moodLabel">ONLINE // FERAL</span>
+    </div>
+
+    <div class="char-stats">
+      <div class="stat-row">
+        <span class="stat-label">MODEL</span>
+        <span class="stat-val" id="statModel">KIMI K2</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">TOKENS</span>
+        <span class="stat-val" id="statTokens">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">MOOD</span>
+        <span class="stat-val" id="statMood">FERAL</span>
+      </div>
+    </div>
   </div>
 </div>
 
