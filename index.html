@@ -238,6 +238,22 @@
   .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; align-items: center; }
   .stat-label { color: var(--muted); font-size: 7px; text-transform: uppercase; letter-spacing: 1px; }
   .stat-val { color: var(--accent); font-size: 7px; }
+
+  /* Mood slider */
+  .mood-bar {
+    width: 100%; z-index: 1;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,45,120,0.2);
+  }
+  .mood-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .mood-title { color: var(--muted); font-size: 7px; text-transform: uppercase; letter-spacing: 1px; }
+  .mood-current { color: var(--accent); font-size: 7px; }
+  input[type=range].mood-slider {
+    width: 100%; accent-color: var(--accent);
+    height: 2px; cursor: pointer;
+  }
+  .mood-labels { display: flex; justify-content: space-between; margin-top: 2px; }
+  .mood-labels span { color: var(--muted); font-size: 6px; }
 </style>
 </head>
 <body>
@@ -346,6 +362,18 @@
         </div>
       </div>
     </div>
+
+    <div class="mood-bar" id="moodBar">
+      <div class="mood-header">
+        <span class="mood-title">MOOD</span>
+        <span class="mood-current" id="moodCurrentLabel">FERAL</span>
+      </div>
+      <input type="range" class="mood-slider" id="moodSlider" min="1" max="5" value="1" />
+      <div class="mood-labels">
+        <span>FERAL</span>
+        <span>STRICT</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -366,6 +394,73 @@
     characterName: 'TANK_GIRL',
     isStreaming: false,
   };
+
+  // --- Mood system ---
+  const MOODS = {
+    1: {
+      label: 'FERAL',
+      accent: '#ff2d78',
+      animSpeed: '0.6s',
+      glowIntensity: '0.25',
+      persona: `You are extremely chaotic, blunt, and brilliant. Keep every response under 3 sentences. Use attitude. No corporate speak. You live in a tank and you love it.`,
+    },
+    2: {
+      label: 'CHAOTIC',
+      accent: '#ff5490',
+      animSpeed: '0.9s',
+      glowIntensity: '0.18',
+      persona: `You are energetic and irreverent but actually helpful. Be loud and direct. Max 4 sentences.`,
+    },
+    3: {
+      label: 'BALANCED',
+      accent: '#cc2460',
+      animSpeed: '1.2s',
+      glowIntensity: '0.13',
+      persona: `You are direct, confident, and casual. Be genuinely helpful without much flair.`,
+    },
+    4: {
+      label: 'PROFESSIONAL',
+      accent: '#9b1de0',
+      animSpeed: '1.8s',
+      glowIntensity: '0.08',
+      persona: `You are clear, concise, and professional. No jokes. Stick to the facts.`,
+    },
+    5: {
+      label: 'STRICTLY BUSINESS',
+      accent: '#7c3aed',
+      animSpeed: '2.5s',
+      glowIntensity: '0.04',
+      persona: `You are terse and precise. One to two sentences maximum. No personality.`,
+    },
+  };
+
+  let currentMood = 1;
+
+  function applyMood(level) {
+    currentMood = level;
+    const m = MOODS[level];
+
+    // Update CSS variable for accent color
+    document.documentElement.style.setProperty('--accent', m.accent);
+
+    // Update animation speed on sprite
+    document.documentElement.style.setProperty('--anim-speed', m.animSpeed);
+
+    // Update glow
+    const glow = document.getElementById('spriteGlow');
+    if (glow) {
+      glow.style.background = `radial-gradient(ellipse, rgba(255,45,120,${m.glowIntensity}) 0%, transparent 70%)`;
+    }
+
+    // Update labels
+    document.getElementById('moodCurrentLabel').textContent = m.label;
+    document.getElementById('moodLabel').textContent = `ONLINE // ${m.label}`;
+    document.getElementById('statMood').textContent = m.label;
+  }
+
+  document.getElementById('moodSlider').addEventListener('input', function() {
+    applyMood(parseInt(this.value));
+  });
 
   // --- Message rendering ---
   function addMessage(role, text) {
@@ -538,6 +633,9 @@
     avatarState.type = 'spritesheet';
     renderAvatar();
   }
+
+  // Apply default mood on load
+  applyMood(1);
 </script>
 
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" />
