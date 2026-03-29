@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tank Girl OS</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --accent: #ff2d78;
+    --accent2: #7c3aed;
+    --bg: #0a0a14;
+    --panel-bg: #0d0d1a;
+    --text: #e0e0e0;
+    --muted: #666;
+    --online: #00ff88;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Header */
+  .header {
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--accent);
+    padding: 4px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-title { color: var(--accent); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header-dots { display: flex; gap: 5px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Main layout */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Chat area 67% */
+  .chat-area {
+    flex: 0 0 67%;
+    display: flex; flex-direction: column;
+    border-right: 1px solid rgba(255,45,120,0.2);
+  }
+
+  /* Avatar panel 33% */
+  .avatar-panel {
+    flex: 0 0 33%;
+    background: var(--panel-bg);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 8px;
+    position: relative; overflow: hidden;
+  }
+
+  /* Pixel grid on avatar panel */
+  .avatar-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,45,120,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,45,120,0.03) 1px, transparent 1px);
+    background-size: 8px 8px;
+    pointer-events: none;
+  }
+
+  /* Corner bracket decorations */
+  .corner { position: absolute; width: 8px; height: 8px; }
+  .corner.tl { top: 6px; left: 6px; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+  .corner.tr { top: 6px; right: 6px; border-top: 1px solid var(--accent); border-right: 1px solid var(--accent); }
+  .corner.bl { bottom: 6px; left: 6px; border-bottom: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+  .corner.br { bottom: 6px; right: 6px; border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title" id="clock">// SYS INIT 00:00:00</span>
+  <div class="header-right">
+    <div class="header-dots">
+      <div class="dot" style="background:var(--online);box-shadow:0 0 4px var(--online);"></div>
+      <div class="dot" style="background:#ffaa00;"></div>
+      <div class="dot" style="background:var(--accent);"></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="chat-area" id="chatArea"></div>
+  <div class="avatar-panel" id="avatarPanel">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+  </div>
+</div>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    const t = [now.getHours(), now.getMinutes(), now.getSeconds()]
+      .map(n => String(n).padStart(2, '0')).join(':');
+    document.getElementById('clock').textContent = `// SYS INIT ${t}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
