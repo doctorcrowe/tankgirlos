@@ -599,6 +599,103 @@
     closeSettings();
   });
 
+  // --- Fireworks AI streaming ---
+  function buildSystemMessage() {
+    const mood = MOODS[currentMood];
+    const name = appConfig.charName || 'TANK GIRL';
+    const bio  = appConfig.bio ? `\n${appConfig.bio}` : '';
+    return `${mood.persona}\nYour name is ${name}.${bio}`;
+  }
+
+  async function streamResponse(userText) {
+    if (!appConfig.apiKey) {
+      addMessage('assistant', '⚠ No API key set. Click ⚙ to add your Fireworks API key.');
+      return;
+    }
+
+    state.isStreaming = true;
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('thinkingDots').style.display = 'flex';
+    setTalking(true);
+
+    // Create empty assistant message bubble to stream into
+    const textDiv = addMessage('assistant', '');
+
+    // Build API messages: system + all prior messages (excluding the empty assistant placeholder)
+    const apiMessages = [
+      { role: 'system', content: buildSystemMessage() },
+      ...state.messages.filter((m, i) => i < state.messages.length - 1),
+    ];
+
+    try {
+      const resp = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${appConfig.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: appConfig.model,
+          messages: apiMessages,
+          stream: true,
+          max_tokens: 512,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.text();
+        textDiv.textContent = `⚠ API error ${resp.status}: ${err.slice(0, 120)}`;
+        state.messages[state.messages.length - 1].content = textDiv.textContent;
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              textDiv.textContent += delta;
+              scrollToBottom();
+            }
+            if (json.usage) {
+              state.tokenCount += json.usage.completion_tokens || 0;
+            }
+          } catch(e) {}
+        }
+      }
+
+      // Update stored message with full response text
+      state.messages[state.messages.length - 1].content = textDiv.textContent;
+
+      // Update token display
+      document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
+      document.getElementById('statTokens').textContent = state.tokenCount;
+
+    } catch (err) {
+      textDiv.textContent = `⚠ Network error: ${err.message}`;
+      state.messages[state.messages.length - 1].content = textDiv.textContent;
+    } finally {
+      state.isStreaming = false;
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('thinkingDots').style.display = 'none';
+      setTalking(false);
+    }
+  }
+
   // --- Message rendering ---
   function addMessage(role, text) {
     // Add to API history
@@ -642,8 +739,7 @@
     if (!text || state.isStreaming) return;
     input.value = '';
     addMessage('user', text);
-    // AI call wired up in Task 8
-    console.log('send:', text);
+    streamResponse(text);
   }
 
   // --- Avatar upload ---
