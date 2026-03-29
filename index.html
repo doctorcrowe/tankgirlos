@@ -629,6 +629,7 @@
     document.getElementById('settingBio').value = appConfig.bio;
     state.characterName = appConfig.charName.toUpperCase();
     document.getElementById('charNameDisplay').textContent = state.characterName;
+    localStorage.setItem('tgos_config', JSON.stringify(appConfig));
 
     // Mood
     if (skin.mood >= 1 && skin.mood <= 5) {
