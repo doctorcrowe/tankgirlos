@@ -1739,7 +1739,7 @@
             issue_id:    { type: 'string', description: 'Issue ID (for get_issue).' },
             title:       { type: 'string', description: 'Issue title (for create_issue).' },
             description: { type: 'string', description: 'Issue description in markdown (for create_issue).' },
-            team_id:     { type: 'string', description: 'Team ID (for create_issue or filtering list_issues).' },
+            team_id:     { type: 'string', description: 'Team UUID from list_teams (the long id: value, NOT the short key like "DEV"). Required for create_issue.' },
             filter:      { type: 'string', description: 'Optional status filter for list_issues e.g. "In Progress".' },
           },
           required: ['action'],
@@ -1872,8 +1872,11 @@
           query = `query($id: String!) { issue(id: $id) { id identifier title description state { name } assignee { name } priority url comments { nodes { body user { name } createdAt } } } }`;
           variables.id = issue_id;
         } else if (action === 'create_issue') {
+          if (!team_id) return 'team_id is required for create_issue. Run list_teams first and use the UUID (the long id: value).';
           query = `mutation($input: IssueCreateInput!) { issueCreate(input: $input) { success issue { id identifier title url } } }`;
-          variables.input = { title, description, teamId: team_id };
+          const input = { title, teamId: team_id };
+          if (description) input.description = description;
+          variables.input = input;
         } else {
           return `Unknown Linear action: ${action}`;
         }
