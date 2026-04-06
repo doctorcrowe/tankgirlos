@@ -1613,10 +1613,26 @@
     copyBtn.innerHTML = COPY_ICON;
     copyBtn.title = 'Copy message';
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(textDiv.innerText).then(() => {
-        copyBtn.textContent = '✓';
-        setTimeout(() => { copyBtn.innerHTML = COPY_ICON; }, 1500);
-      });
+      const text = textDiv.innerText;
+      function onSuccess() {
+        copyBtn.style.color = 'var(--online)';
+        copyBtn.textContent = 'copied!';
+        setTimeout(() => { copyBtn.style.color = ''; copyBtn.innerHTML = COPY_ICON; }, 1800);
+      }
+      function fallbackCopy() {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); onSuccess(); } catch(e) { copyBtn.textContent = '✗'; }
+        document.body.removeChild(ta);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
     });
 
     div.appendChild(speaker);
