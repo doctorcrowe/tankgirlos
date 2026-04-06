@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.3.0
+
+### Local Server & Tool Calling
+- **`server.js`** — Express server on `127.0.0.1:3001` giving Tank Girl OS Claude Code-style capabilities
+- **`start.command`** — double-click launcher for macOS (auto-kills previous instance on restart)
+- **Custom icon** — Tank Girl face applied to `start.command` via `make_icon.py` + background removal
+- **Tool loop** — when the server is running, messages go through a non-streaming tool-calling loop instead of direct streaming
+- **Tools available to the model:**
+  - `read_file` — read any file within your home directory
+  - `write_file` — create or edit files
+  - `list_dir` — browse the filesystem
+  - `run_command` — execute shell commands (with confirmation prompt)
+  - `web_fetch` — fetch any URL and return readable text
+  - `slack` — list channels, read channel history, search messages, send messages
+  - `linear` — list teams/issues, get issue details, create issues
+- **Tool trace** — collapsible `[N tool calls]` block above each answer shows what the model did
+- **Server status dot** — green/gray dot in the inference bar; pings every 15 seconds
+
+### Integrations
+- **Slack** — add a bot token in Settings → INTEGRATIONS. Needs `channels:read channels:history groups:read groups:history search:read chat:write` scopes
+- **Linear** — add an API key in Settings → INTEGRATIONS. Supports listing, reading, and creating issues
+- Settings panel has a dedicated INTEGRATIONS section
+
+### Security
+- **Secret token** — generated once on first server start, saved to `.tgos-secret`. Injected into the page at serve time and required on every API request (`X-TGOS-Token` header). Blocks any unauthorized local process or website from hitting the API
+- **CORS hardened** — restricted from `*` to `http://127.0.0.1:3001` and `file://` only
+- **Path sandbox** — file read/write/list operations restricted to home directory and `/tmp`. SSH keys, AWS credentials, and system files are unreachable
+- **Command confirmation modal** — before any shell command runs, a red modal shows the exact command and requires Allow or Deny
+- `.tgos-secret` and `.tgos-config.json` are gitignored
+
+### Config persistence
+- Settings (API keys, Slack token, Linear key, character, model) now saved to `.tgos-config.json` on disk via the server
+- Survives origin changes — same config whether opening as `file://` or `http://127.0.0.1:3001`
+- Falls back to `localStorage` if the server is offline
+
+### Visual
+- **Cyberpunk radial visualizer** — animated canvas behind the avatar; radial bars pulse pink → cyan in a ring with a rotating scan line
+- Tries microphone via Web Audio API (bars react to live audio); falls back to a sine-wave animation if mic is denied or unavailable
+
+### Bug fixes
+- **Copy button** — now works on `file://` protocol using `execCommand` fallback; shows green **copied!** for 1.8s on success
+- **Linear `create_issue`** — fixed "Argument Validation Error"; `team_id` now validated early with a clear message, `description` excluded from input if not provided, tool schema clarifies UUID vs. key
+
+---
+
 ## v1.2.0
 
 ### Persistence & Memory
