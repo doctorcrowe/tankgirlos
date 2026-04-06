@@ -1479,7 +1479,7 @@
           model,
           messages: apiMessages,
           stream: true,
-          max_tokens: { 1: 300, 2: 400, 3: 1500, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
+          max_tokens: { 1: 600, 2: 1000, 3: 1500, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
         }),
       });
 
@@ -2005,7 +2005,7 @@
             messages: apiMessages,
             tools: TOOLS,
             tool_choice: 'auto',
-            max_tokens: { 1: 300, 2: 400, 3: 1500, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
+            max_tokens: { 1: 600, 2: 1000, 3: 1500, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
           }),
         });
 
