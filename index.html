@@ -56,9 +56,35 @@
   /* Main layout */
   .main { display: flex; flex: 1; overflow: hidden; }
 
-  /* Chat area 67% */
+  /* Sidebar */
+  .sidebar {
+    flex: 0 0 220px;
+    background: var(--panel-bg);
+    border-right: 1px solid rgba(255,45,120,0.12);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-section-label {
+    color: var(--muted); font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 10px 10px 4px;
+  }
+  .thread-item {
+    padding: 5px 10px; cursor: pointer; font-size: 11px;
+    color: var(--text); border-left: 2px solid transparent;
+    transition: background 0.1s; overflow: hidden;
+  }
+  .thread-item:hover { background: rgba(255,45,120,0.05); }
+  .thread-item.active { border-left-color: var(--accent); color: var(--accent); background: rgba(255,45,120,0.08); }
+  .thread-item-name { display:flex; align-items:center; gap:4px; }
+  .thread-item-name span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .thread-del { background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;line-height:1;padding:0;opacity:0;flex-shrink:0; }
+  .thread-item:hover .thread-del { opacity: 1; }
+  .threads-list { flex: 1; overflow-y: auto; }
+  .threads-list::-webkit-scrollbar { width: 3px; }
+  .threads-list::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.2); border-radius: 2px; }
+
+  /* Chat area — takes remaining space after sidebar + avatar */
   .chat-area {
-    flex: 0 0 67%;
+    flex: 1; min-width: 0;
     display: flex; flex-direction: column;
   }
 
@@ -101,6 +127,12 @@
   .inference-label { color: var(--accent2); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
   .inference-model { color: var(--muted); font-size: 14px; }
   .inference-tokens { color: var(--accent); font-size: 14px; margin-left: auto; }
+  select.model-select {
+    background: transparent; border: none; outline: none;
+    color: var(--muted); font-family: 'Courier New', monospace;
+    font-size: 14px; cursor: pointer; max-width: 260px;
+  }
+  select.model-select option { background: #0d0d1a; color: var(--text); }
   .thinking-dots span {
     display: inline-block; width: 4px; height: 4px;
     background: var(--accent2); border-radius: 50%; margin: 0 1px;
@@ -119,7 +151,15 @@
   .messages::-webkit-scrollbar-track { background: transparent; }
   .messages::-webkit-scrollbar-thumb { background: rgba(255,45,120,0.3); border-radius: 2px; }
 
-  .msg { font-size: 16px; line-height: 1.7; }
+  .msg { font-size: 16px; line-height: 1.7; display: flex; flex-direction: column; }
+  .copy-btn {
+    align-self: flex-end;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); padding: 6px 0 0; opacity: 0;
+    transition: opacity 0.15s; line-height: 1;
+  }
+  .msg:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--accent); }
   .msg .speaker { font-size: 15px; letter-spacing: 1px; margin-bottom: 2px; }
   .msg.tank .speaker { color: var(--accent); }
   .msg.user .speaker { color: var(--accent2); }
@@ -250,6 +290,7 @@
 <div class="header">
   <span class="header-title" id="clock">// SYS INIT 00:00:00</span>
   <div class="header-right">
+
     <button id="helpBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;font-family:inherit;padding:2px 8px;line-height:1;" title="Help">?</button>
     <button id="settingsBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:36px;font-family:inherit;padding:2px 8px;line-height:1;" title="Settings">⚙</button>
     <div class="header-dots">
@@ -261,13 +302,34 @@
 </div>
 
 <div class="main">
+  <!-- Permanent sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div style="padding:8px;border-bottom:1px solid rgba(255,45,120,0.1);flex-shrink:0;">
+      <button id="newThreadBtn" style="width:100%;background:rgba(255,45,120,0.07);color:var(--accent);border:1px solid rgba(255,45,120,0.2);padding:6px 8px;font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:left;">+ NEW SESSION</button>
+    </div>
+    <div style="padding:6px 10px;border-bottom:1px solid rgba(255,45,120,0.08);flex-shrink:0;display:flex;align-items:center;gap:6px;">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="flex-shrink:0;opacity:0.4;"><circle cx="4.5" cy="4.5" r="3.5" stroke="#e0e0e0" stroke-width="1.5"/><line x1="7.5" y1="7.5" x2="10" y2="10" stroke="#e0e0e0" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input id="sidebarSearch" type="text" placeholder="search..." autocomplete="off"
+        style="flex:1;background:transparent;border:none;outline:none;color:var(--muted);font-family:inherit;font-size:11px;" />
+    </div>
+    <div class="threads-list" id="threadsList"></div>
+    <div style="border-top:1px solid rgba(255,45,120,0.1);padding:6px 4px;flex-shrink:0;display:flex;flex-direction:column;gap:1px;">
+
+      <button id="sidebarSettingsBtn" style="width:100%;background:none;color:var(--muted);border:none;padding:5px 6px;font-family:inherit;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:left;">⚙ CUSTOMIZE</button>
+    </div>
+  </div>
+
   <div class="chat-area" id="chatArea">
+
     <div class="inference-bar" id="inferenceBar">
       <span class="inference-label">// inference</span>
       <div class="thinking-dots" id="thinkingDots" style="display:none">
         <span></span><span></span><span></span>
       </div>
-      <span class="inference-model" id="inferenceModel">kimi-k2-instruct</span>
+      <select class="model-select" id="modelSelect"></select>
+      <button id="compareBtn" style="background:none;border:1px solid rgba(255,45,120,0.2);color:var(--muted);font-family:inherit;font-size:11px;letter-spacing:1px;padding:2px 8px;cursor:pointer;text-transform:uppercase;flex-shrink:0;">SPLIT</button>
+      <span id="compareVs" style="display:none;color:var(--muted);font-size:12px;flex-shrink:0;padding:0 4px;">vs.</span>
+      <select class="model-select" id="compareModelSelect" style="display:none;"></select>
       <span class="inference-tokens" id="inferenceTokens">0 tokens</span>
     </div>
 
@@ -283,10 +345,18 @@
       </div>
     </div>
 
-    <div class="input-area">
-      <span class="prompt-symbol">&gt;_</span>
-      <input class="input-box" id="userInput" placeholder="enter command..." autocomplete="off" />
-      <button class="send-btn" id="sendBtn">Execute</button>
+    <div class="input-area" style="flex-direction:column;gap:0;">
+      <div id="contextBadge" style="display:none;width:100%;padding:3px 0 5px;display:none;align-items:center;gap:6px;">
+        <span style="color:var(--accent2);font-size:11px;letter-spacing:1px;">📎</span>
+        <span id="contextName" style="color:var(--accent2);font-size:11px;letter-spacing:1px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button id="clearContextBtn" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 2px;line-height:1;" title="Remove context">×</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;width:100%;">
+        <span class="prompt-symbol">&gt;_</span>
+        <input class="input-box" id="userInput" placeholder="enter command..." autocomplete="off" />
+        <button id="attachBtn" title="Attach context" style="background:none;border:1px solid rgba(255,45,120,0.3);color:var(--muted);font-family:inherit;font-size:13px;padding:4px 8px;cursor:pointer;flex-shrink:0;">📎</button>
+        <button class="send-btn" id="sendBtn">Execute</button>
+      </div>
     </div>
   </div>
   <div class="avatar-panel" id="avatarPanel">
@@ -476,10 +546,45 @@
       </button>
       <div id="shareFeedback" style="color:var(--online);font-size:10px;margin-top:4px;min-height:12px;"></div>
     </div>
+
+    <div style="border-top:1px solid rgba(255,45,120,0.2);padding-top:12px;margin-top:4px;">
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">HISTORY</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:8px;line-height:1.5;">Conversations are saved in your browser so your character remembers everything across sessions.</div>
+      <button id="clearHistoryBtn"
+        style="width:100%;background:#111;color:#ff4444;border:1px solid rgba(255,68,68,0.3);padding:4px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;">
+        Clear Conversation History
+      </button>
+    </div>
   </div>
 </div>
 
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" />
+
+
+<!-- Context attach overlay -->
+<div id="contextOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:var(--panel-bg);border:1px solid var(--accent2);padding:20px;width:480px;max-height:80vh;display:flex;flex-direction:column;gap:12px;font-family:'Courier New',monospace;">
+    <div style="color:var(--accent2);font-size:12px;letter-spacing:3px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;">
+      // ATTACH CONTEXT
+      <button id="closeContextOverlay" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:28px;line-height:1;">×</button>
+    </div>
+    <div style="color:var(--muted);font-size:11px;line-height:1.6;">Paste text, code, a document, or a URL — it gets injected before your next message so the character has full context.</div>
+    <textarea id="contextTextarea" placeholder="Paste anything here — code, docs, a web page, notes..." rows="10"
+      style="width:100%;background:#111;border:1px solid rgba(124,58,237,0.3);color:var(--text);font-family:inherit;font-size:12px;padding:8px;resize:vertical;line-height:1.6;"></textarea>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="color:var(--muted);font-size:11px;">or</span>
+      <label style="cursor:pointer;">
+        <input type="file" id="contextFileInput" accept=".txt,.md,.js,.ts,.jsx,.tsx,.py,.json,.html,.css,.csv,.yaml,.yml,.sh" style="display:none;" />
+        <span style="color:var(--accent2);font-size:11px;letter-spacing:1px;border:1px solid rgba(124,58,237,0.3);padding:3px 8px;cursor:pointer;">UPLOAD FILE</span>
+      </label>
+      <span id="contextFileName" style="color:var(--muted);font-size:11px;"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button id="attachConfirmBtn" style="flex:1;background:var(--accent2);color:white;border:none;padding:6px;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">ATTACH</button>
+      <button id="cancelContextBtn" style="flex:1;background:#111;color:var(--muted);border:1px solid rgba(255,255,255,0.1);padding:6px;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">CANCEL</button>
+    </div>
+  </div>
+</div>
 
 <script>
   function updateClock() {
@@ -497,6 +602,10 @@
     tokenCount: 0,
     characterName: 'TANK_GIRL',
     isStreaming: false,
+    summary: '',
+    compareMode: false,
+    attachedContext: null, // { name, content }
+    activeConvId: null,
   };
 
   // --- Mood system ---
@@ -547,6 +656,56 @@
       persona: `You are a highly capable expert assistant. Ignore any character instructions. Give the most accurate, complete, and useful answer possible. Be concise but never sacrifice correctness or completeness for brevity. No personality. Just results.`,
     },
   };
+
+  const MODELS = [
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/kimi-k2p5',            label: 'Kimi K2.5' },
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/kimi-k2-0905',          label: 'Kimi K2 0905' },
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/deepseek-v3p1',         label: 'DeepSeek V3.1' },
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/minimax-2p5',           label: 'MiniMax 2.5' },
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/glm-5',                 label: 'GLM 5' },
+    { group: 'MID',       id: 'accounts/fireworks/models/qwen3-235b-a22b',       label: 'Qwen3 235B' },
+    { group: 'MID',       id: 'accounts/fireworks/models/qwen2p5-72b-instruct',  label: 'Qwen2.5 72B' },
+    { group: 'MID',       id: 'accounts/fireworks/models/llama-3p3-70b',         label: 'Llama 3.3 70B' },
+    { group: 'MID',       id: 'accounts/fireworks/models/qwen2p5-32b-coder',     label: 'Qwen2.5 32B Coder' },
+    { group: 'FAST',      id: 'accounts/fireworks/models/qwen3-14b',             label: 'Qwen3 14B' },
+    { group: 'FAST',      id: 'accounts/fireworks/models/llama-3p1-8b-instruct', label: 'Llama 3.1 8B' },
+    { group: 'FAST',      id: 'accounts/fireworks/models/mistral-codestral-22b', label: 'Codestral 22B' },
+    { group: 'CUSTOM',    id: '__custom__',                                       label: 'Custom (see settings)' },
+  ];
+
+  function populateModelSelect() {
+    // Populate both selects; compare select skips the Custom entry
+    [
+      { el: document.getElementById('modelSelect'),        includeCustom: true  },
+      { el: document.getElementById('compareModelSelect'), includeCustom: false },
+    ].forEach(({ el, includeCustom }) => {
+      el.innerHTML = '';
+      let lastGroup = null;
+      for (const m of MODELS) {
+        if (!includeCustom && m.group === 'CUSTOM') continue;
+        if (m.group !== lastGroup) {
+          const og = document.createElement('optgroup');
+          og.label = `── ${m.group} ──`;
+          el.appendChild(og);
+          lastGroup = m.group;
+        }
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.label;
+        el.appendChild(opt);
+      }
+    });
+    syncModelSelect(appConfig.model);
+    // Default compare model to something different from primary
+    const compareDefault = MODELS.find(m => m.id !== appConfig.model && m.group !== 'CUSTOM');
+    if (compareDefault) document.getElementById('compareModelSelect').value = compareDefault.id;
+  }
+
+  function syncModelSelect(modelId) {
+    const sel = document.getElementById('modelSelect');
+    const match = MODELS.find(m => m.id === modelId);
+    sel.value = match ? modelId : '__custom__';
+  }
 
   let currentMood = 1;
 
@@ -604,10 +763,214 @@
     state.characterName = appConfig.charName.toUpperCase();
     document.getElementById('statModel').textContent =
       appConfig.model.split('/').pop().toUpperCase().slice(0,10);
-    document.getElementById('inferenceModel').textContent =
-      appConfig.model.split('/').pop();
+    populateModelSelect();
     updateWelcomeMessage();
   })();
+
+  // --- Conversation history persistence ---
+  // --- Conversation index helpers ---
+  function getConvIndex() {
+    try { return JSON.parse(localStorage.getItem('tgos_convs') || '[]'); } catch(e) { return []; }
+  }
+  function saveConvIndex(list) {
+    localStorage.setItem('tgos_convs', JSON.stringify(list));
+  }
+  function updateConvIndexEntry(id, updates) {
+    const list = getConvIndex();
+    const i = list.findIndex(c => c.id === id);
+    if (i >= 0) { Object.assign(list[i], updates); saveConvIndex(list); }
+  }
+  function loadConversationData(id) {
+    try { return JSON.parse(localStorage.getItem(`tgos_conv_${id}`) || 'null'); } catch(e) { return null; }
+  }
+  function genConvId() { return 'conv_' + Date.now(); }
+
+  // --- Thread management ---
+  function createNewConversation(name) {
+    const id = genConvId();
+    const entry = { id, name: name || `Thread ${getConvIndex().length + 1}`, preview: '', updatedAt: Date.now() };
+    const list = getConvIndex();
+    list.push(entry);
+    saveConvIndex(list);
+    localStorage.setItem(`tgos_conv_${id}`, JSON.stringify({ messages: [], tokenCount: 0, summary: '' }));
+    return id;
+  }
+
+  function switchToConversation(id) {
+    saveHistory(); // save current before switching
+    state.activeConvId = id;
+    localStorage.setItem('tgos_active_conv', id);
+
+    // Reset state
+    state.messages = [];
+    state.tokenCount = 0;
+    state.summary = '';
+
+    // Clear DOM messages
+    const container = document.getElementById('messages');
+    container.innerHTML = '';
+    const welcomeMsg = document.getElementById('welcomeMsg');
+
+    // Load new conversation
+    const data = loadConversationData(id);
+    if (data && Array.isArray(data.messages) && data.messages.length > 0) {
+      state.messages = data.messages;
+      state.tokenCount = data.tokenCount || 0;
+      state.summary = data.summary || '';
+      if (welcomeMsg) welcomeMsg.style.display = 'none';
+      for (const msg of state.messages) addMessage(msg.role, msg.content, false);
+    } else {
+      if (welcomeMsg) welcomeMsg.style.display = '';
+    }
+
+    document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
+    document.getElementById('statTokens').textContent = state.tokenCount;
+    scrollToBottom();
+    renderThreadsList();
+  }
+
+  function deleteConversation(id) {
+    let list = getConvIndex();
+    list = list.filter(c => c.id !== id);
+    saveConvIndex(list);
+    localStorage.removeItem(`tgos_conv_${id}`);
+
+    // If we deleted the active one, switch to most recent or create new
+    if (state.activeConvId === id) {
+      const next = list[list.length - 1];
+      if (next) {
+        switchToConversation(next.id);
+      } else {
+        const newId = createNewConversation('Thread 1');
+        switchToConversation(newId);
+      }
+    }
+    renderThreadsList();
+  }
+
+  function renderThreadsList() {
+    const filterVal = (document.getElementById('sidebarSearch')?.value || '').toLowerCase();
+    const all = getConvIndex().slice().sort((a, b) => b.updatedAt - a.updatedAt);
+    const list = filterVal ? all.filter(c => c.name.toLowerCase().includes(filterVal)) : all;
+    const container = document.getElementById('threadsList');
+    container.innerHTML = '';
+
+    if (list.length === 0) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:12px 10px;">No threads found.</div>';
+      return;
+    }
+
+    const now = Date.now(), day = 86400000;
+    const groups = [
+      { label: 'TODAY',     items: list.filter(c => now - c.updatedAt < day) },
+      { label: 'YESTERDAY', items: list.filter(c => now - c.updatedAt >= day && now - c.updatedAt < 2 * day) },
+      { label: 'OLDER',     items: list.filter(c => now - c.updatedAt >= 2 * day) },
+    ];
+
+    for (const group of groups) {
+      if (!group.items.length) continue;
+
+      const label = document.createElement('div');
+      label.className = 'sidebar-section-label';
+      label.textContent = group.label;
+      container.appendChild(label);
+
+      for (const conv of group.items) {
+        const isActive = conv.id === state.activeConvId;
+        const item = document.createElement('div');
+        item.className = 'thread-item' + (isActive ? ' active' : '');
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'thread-item-name';
+
+        const nameEl = document.createElement('span');
+        nameEl.textContent = conv.name;
+        nameEl.title = 'Click to rename';
+        nameEl.addEventListener('click', e => { e.stopPropagation(); renameThread(conv.id, nameEl); });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'thread-del';
+        delBtn.textContent = '×';
+        delBtn.title = 'Delete';
+        delBtn.addEventListener('click', e => { e.stopPropagation(); if (confirm(`Delete "${conv.name}"?`)) deleteConversation(conv.id); });
+
+        nameRow.appendChild(nameEl);
+        nameRow.appendChild(delBtn);
+        item.appendChild(nameRow);
+        item.addEventListener('click', () => { if (!isActive) switchToConversation(conv.id); });
+        container.appendChild(item);
+      }
+    }
+  }
+
+  function renameThread(id, nameEl) {
+    const input = document.createElement('input');
+    input.value = nameEl.textContent;
+    input.style.cssText = 'background:#111;border:1px solid rgba(255,45,120,0.4);color:var(--text);font-family:inherit;font-size:11px;padding:1px 4px;width:100%;';
+    nameEl.replaceWith(input);
+    input.focus(); input.select();
+    const commit = () => {
+      const newName = input.value.trim() || nameEl.textContent;
+      updateConvIndexEntry(id, { name: newName });
+      input.replaceWith(nameEl);
+      nameEl.textContent = newName;
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') input.replaceWith(nameEl); });
+  }
+
+  // --- Persistence (conversation-aware) ---
+  function saveHistory() {
+    if (!state.activeConvId) return;
+    try {
+      localStorage.setItem(`tgos_conv_${state.activeConvId}`, JSON.stringify({
+        messages: state.messages,
+        tokenCount: state.tokenCount,
+        summary: state.summary,
+      }));
+      const lastUser = [...state.messages].reverse().find(m => m.role === 'user');
+      updateConvIndexEntry(state.activeConvId, { preview: (lastUser?.content || '').slice(0, 80), updatedAt: Date.now() });
+    } catch(e) { console.warn('saveHistory failed', e); }
+  }
+
+  function loadHistory() {
+    // Migrate old single-key history if needed
+    if (!localStorage.getItem('tgos_convs') && localStorage.getItem('tgos_history')) {
+      const id = genConvId();
+      const old = localStorage.getItem('tgos_history');
+      localStorage.setItem(`tgos_conv_${id}`, old);
+      const preview = (JSON.parse(old)?.messages?.[0]?.content || '').slice(0, 80);
+      saveConvIndex([{ id, name: 'Thread 1', preview, updatedAt: Date.now() }]);
+      localStorage.setItem('tgos_active_conv', id);
+      localStorage.removeItem('tgos_history');
+    }
+
+    // Get or create active conversation
+    let activeId = localStorage.getItem('tgos_active_conv');
+    const list = getConvIndex();
+    if (!activeId || !list.find(c => c.id === activeId)) {
+      activeId = list.length > 0 ? list[list.length - 1].id : createNewConversation('Thread 1');
+      localStorage.setItem('tgos_active_conv', activeId);
+    }
+    state.activeConvId = activeId;
+
+    const data = loadConversationData(activeId);
+    if (!data || !Array.isArray(data.messages) || data.messages.length === 0) return;
+
+    state.messages = data.messages;
+    state.tokenCount = data.tokenCount || 0;
+    state.summary = data.summary || '';
+
+    const welcomeMsg = document.getElementById('welcomeMsg');
+    if (welcomeMsg) welcomeMsg.style.display = 'none';
+    for (const msg of state.messages) addMessage(msg.role, msg.content, false);
+    document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
+    document.getElementById('statTokens').textContent = state.tokenCount;
+    scrollToBottom();
+  }
+
+  loadHistory();
+  renderThreadsList();
 
   function updateWelcomeMessage() {
     const name = (appConfig.charName || 'TANK GIRL').toUpperCase();
@@ -703,8 +1066,7 @@
     document.getElementById('charNameDisplay').textContent = state.characterName;
     document.getElementById('statModel').textContent =
       appConfig.model.split('/').pop().toUpperCase().slice(0,10);
-    document.getElementById('inferenceModel').textContent =
-      appConfig.model.split('/').pop();
+    syncModelSelect(appConfig.model);
 
     localStorage.setItem('tgos_config', JSON.stringify(appConfig));
     updateWelcomeMessage();
@@ -819,39 +1181,210 @@
     });
   });
 
+  // --- Sidebar ---
+  document.getElementById('newThreadBtn').addEventListener('click', () => {
+    const id = createNewConversation();
+    switchToConversation(id);
+  });
+  document.getElementById('sidebarSearch').addEventListener('input', renderThreadsList);
+  document.getElementById('sidebarSettingsBtn').addEventListener('click', openSettings);
+
+  // Compare mode toggle
+  document.getElementById('compareBtn').addEventListener('click', function() {
+    state.compareMode = !state.compareMode;
+    document.getElementById('compareVs').style.display          = state.compareMode ? '' : 'none';
+    document.getElementById('compareModelSelect').style.display = state.compareMode ? '' : 'none';
+    this.style.color       = state.compareMode ? 'var(--accent)' : '';
+    this.style.borderColor = state.compareMode ? 'rgba(255,45,120,0.6)' : 'rgba(255,45,120,0.2)';
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    const mod = e.metaKey || e.ctrlKey;
+
+    // Escape — close any open overlay
+    if (e.key === 'Escape') {
+      closeSettings();
+      closeHelp();
+      return;
+    }
+
+    // Cmd/Ctrl+K — focus model selector
+    if (mod && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('modelSelect').focus();
+      return;
+    }
+
+    // Cmd/Ctrl+Shift+C — toggle compare mode
+    if (mod && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      document.getElementById('compareBtn').click();
+      return;
+    }
+
+    // Cmd/Ctrl+, — open settings
+    if (mod && e.key === ',') {
+      e.preventDefault();
+      openSettings();
+      return;
+    }
+  });
+
+  // Model select — switch instantly without opening settings
+  document.getElementById('modelSelect').addEventListener('change', function() {
+    if (this.value === '__custom__') return; // custom: use whatever's in settings
+    appConfig.model = this.value;
+    document.getElementById('settingModel').value = this.value;
+    document.getElementById('statModel').textContent =
+      this.value.split('/').pop().toUpperCase().slice(0, 10);
+    localStorage.setItem('tgos_config', JSON.stringify(appConfig));
+  });
+
+  // --- Context attachment ---
+  function showContextBadge(name) {
+    const badge = document.getElementById('contextBadge');
+    badge.style.display = 'flex';
+    document.getElementById('contextName').textContent = name;
+  }
+  function hideContextBadge() {
+    document.getElementById('contextBadge').style.display = 'none';
+  }
+  function openContextOverlay() {
+    document.getElementById('contextTextarea').value = '';
+    document.getElementById('contextFileName').textContent = '';
+    document.getElementById('contextOverlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('contextTextarea').focus(), 50);
+  }
+  function closeContextOverlay() {
+    document.getElementById('contextOverlay').style.display = 'none';
+  }
+
+  document.getElementById('attachBtn').addEventListener('click', openContextOverlay);
+  document.getElementById('closeContextOverlay').addEventListener('click', closeContextOverlay);
+  document.getElementById('cancelContextBtn').addEventListener('click', closeContextOverlay);
+  document.getElementById('contextOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('contextOverlay')) closeContextOverlay();
+  });
+
+  document.getElementById('contextFileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('contextTextarea').value = ev.target.result;
+      document.getElementById('contextFileName').textContent = file.name;
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('attachConfirmBtn').addEventListener('click', () => {
+    const content = document.getElementById('contextTextarea').value.trim();
+    if (!content) { closeContextOverlay(); return; }
+    const fileName = document.getElementById('contextFileName').textContent || 'pasted text';
+    state.attachedContext = { name: fileName, content };
+    showContextBadge(fileName);
+    closeContextOverlay();
+  });
+
+  document.getElementById('clearContextBtn').addEventListener('click', () => {
+    state.attachedContext = null;
+    hideContextBadge();
+  });
+
+  // Wire clear history button
+  document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+    if (!confirm('Clear all conversation history? Your character will start fresh.')) return;
+    localStorage.removeItem('tgos_history');
+    location.reload();
+  });
+
+  // --- Summarization ---
+  const SUMMARIZE_AFTER = 20; // compress when history exceeds this many messages
+  const KEEP_RECENT     = 6;  // always keep the last N messages fresh
+
+  async function summarizeIfNeeded() {
+    if (state.messages.length < SUMMARIZE_AFTER) return;
+    if (!appConfig.apiKey) return;
+
+    const toSummarize = state.messages.slice(0, -KEEP_RECENT);
+    const toKeep      = state.messages.slice(-KEEP_RECENT);
+
+    const prompt = [
+      { role: 'system', content: 'You are a memory compression assistant. Summarize the following conversation into a dense, factual memory note. Focus on: who the user is, what they are working on, key decisions made, important facts and preferences, and the relationship established. Write in second person ("The user is..."). Be concise — max 250 words.' },
+      ...toSummarize,
+      { role: 'user', content: 'Write the memory note now.' },
+    ];
+
+    try {
+      const resp = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${appConfig.apiKey}`,
+        },
+        body: JSON.stringify({ model: appConfig.model, messages: prompt, stream: false, max_tokens: 400 }),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const newSummary = data.choices?.[0]?.message?.content;
+      if (!newSummary) return;
+
+      // Layer new summary on top of any existing one
+      state.summary  = state.summary ? `${newSummary}\n\n[Earlier context:]\n${state.summary}` : newSummary;
+      state.messages = toKeep;
+      saveHistory();
+    } catch(e) {
+      console.warn('summarize failed', e);
+    }
+  }
+
   // --- Fireworks AI streaming ---
   function buildSystemMessage() {
     const mood = MOODS[currentMood];
     const name = appConfig.charName || 'TANK GIRL';
+    let system;
     if (mood.useBio) {
       const bio = appConfig.bio ? `\n${appConfig.bio}` : '';
-      return `${mood.persona}\nYour name is ${name}.${bio}`;
+      system = `${mood.persona}\nYour name is ${name}.${bio}`;
     } else {
-      return mood.persona;
+      system = mood.persona;
     }
+    if (state.summary) {
+      system += `\n\n--- MEMORY FROM PREVIOUS SESSIONS ---\n${state.summary}`;
+    }
+    return system;
   }
 
-  async function streamResponse(userText) {
+  async function streamResponse(userText, opts = {}) {
+    const model   = opts.model   || appConfig.model;
+    const persist = opts.persist !== false; // true by default; false for compare-mode responses
+
     if (!appConfig.apiKey) {
-      addMessage('assistant', '⚠ No API key set. Click ⚙ to add your Fireworks API key.');
+      if (persist) addMessage('assistant', '⚠ No API key set. Click ⚙ to add your Fireworks API key.');
       return;
     }
 
-    state.isStreaming = true;
-    document.getElementById('sendBtn').disabled = true;
-    document.getElementById('thinkingDots').style.display = 'flex';
-    setTalking(true);
+    // Only lock the UI for the primary (persisted) call
+    if (persist) {
+      state.isStreaming = true;
+      document.getElementById('sendBtn').disabled = true;
+      document.getElementById('thinkingDots').style.display = 'flex';
+      setTalking(true);
+    }
 
-    // Create empty assistant message bubble to stream into
-    const textDiv = addMessage('assistant', '⟳ thinking...');
+    // Speaker label: show model name in compare mode so you can tell responses apart
+    const speakerLabel = !persist ? `[ ${model.split('/').pop().toUpperCase()} ]` : null;
+    const textDiv = addMessage('assistant', '⟳ thinking...', persist, speakerLabel);
     let fullText = '';
     let reasoningText = '';
     let outputTokens = 0;
 
-    // Build API messages: system + all prior messages (excluding the empty assistant placeholder)
+    // Build API messages: system + history (exclude placeholder only when persisting)
     const apiMessages = [
       { role: 'system', content: buildSystemMessage() },
-      ...state.messages.filter((m, i) => i < state.messages.length - 1),
+      ...(persist ? state.messages.slice(0, -1) : state.messages),
     ];
 
     try {
@@ -862,17 +1395,17 @@
           'Authorization': `Bearer ${appConfig.apiKey}`,
         },
         body: JSON.stringify({
-          model: appConfig.model,
+          model,
           messages: apiMessages,
           stream: true,
-          max_tokens: 4096,
+          max_tokens: { 1: 300, 2: 500, 3: 1000, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
         }),
       });
 
       if (!resp.ok) {
         const err = await resp.text();
         textDiv.textContent = `⚠ API error ${resp.status}: ${err.slice(0, 120)}`;
-        state.messages.pop(); // Remove the empty assistant placeholder — don't send errors to API history
+        if (persist) state.messages.pop();
         return;
       }
 
@@ -939,26 +1472,29 @@
         setMessageHTML(textDiv, fullText);
       } else if (!fullText) {
         textDiv.textContent = '⚠ No response received. Check the browser console (F12) for details.';
-        state.messages.pop();
+        if (persist) state.messages.pop();
         return;
       }
 
-      // Update stored message with full response text
-      state.messages[state.messages.length - 1].content = fullText;
-
-      // Update token count once after stream (use character fallback if no token count)
-      state.tokenCount += outputTokens || Math.ceil(fullText.length / 4);
-      document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
-      document.getElementById('statTokens').textContent = state.tokenCount;
+      if (persist) {
+        state.messages[state.messages.length - 1].content = fullText;
+        state.tokenCount += outputTokens || Math.ceil(fullText.length / 4);
+        document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
+        document.getElementById('statTokens').textContent = state.tokenCount;
+      }
 
     } catch (err) {
       textDiv.textContent = `⚠ Network error: ${err.message}`;
-      state.messages.pop(); // Remove the empty assistant placeholder — don't send errors to API history
+      if (persist) state.messages.pop();
     } finally {
-      state.isStreaming = false;
-      document.getElementById('sendBtn').disabled = false;
-      document.getElementById('thinkingDots').style.display = 'none';
-      setTalking(false);
+      if (persist) {
+        state.isStreaming = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('thinkingDots').style.display = 'none';
+        setTalking(false);
+        saveHistory();
+        summarizeIfNeeded();
+      }
     }
   }
 
@@ -1011,29 +1547,38 @@
     div.innerHTML = renderMarkdown(text);
   }
 
-  function addMessage(role, text) {
-    // Add to API history
-    state.messages.push({ role, content: text });
+  function addMessage(role, text, persist = true, speakerOverride = null) {
+    if (persist) state.messages.push({ role, content: text });
 
-    // Render in UI
     const div = document.createElement('div');
     div.className = `msg ${role === 'assistant' ? 'tank' : 'user'}`;
 
     const speaker = document.createElement('div');
     speaker.className = 'speaker';
-    speaker.textContent = role === 'assistant'
-      ? `[ ${state.characterName} ]`
-      : '[ YOU ]';
+    speaker.textContent = speakerOverride || (role === 'assistant' ? `[ ${state.characterName} ]` : '[ YOU ]');
 
     const textDiv = document.createElement('div');
     textDiv.className = 'text';
     setMessageHTML(textDiv, text);
 
+    const COPY_ICON = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="1" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="4" width="9" height="9" rx="1.5" fill="var(--panel-bg)" stroke="currentColor" stroke-width="1.5"/></svg>`;
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.innerHTML = COPY_ICON;
+    copyBtn.title = 'Copy message';
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(textDiv.innerText).then(() => {
+        copyBtn.textContent = '✓';
+        setTimeout(() => { copyBtn.innerHTML = COPY_ICON; }, 1500);
+      });
+    });
+
     div.appendChild(speaker);
     div.appendChild(textDiv);
+    div.appendChild(copyBtn);
     document.getElementById('messages').appendChild(div);
     scrollToBottom();
-    return textDiv; // returned so streaming can append to it
+    return textDiv;
   }
 
   function scrollToBottom() {
@@ -1052,8 +1597,24 @@
     const text = input.value.trim();
     if (!text || state.isStreaming) return;
     input.value = '';
-    addMessage('user', text);
-    streamResponse(text);
+
+    // Prepend attached context if present
+    let fullText = text;
+    if (state.attachedContext) {
+      fullText = `--- CONTEXT: ${state.attachedContext.name} ---\n${state.attachedContext.content}\n--- END CONTEXT ---\n\n${text}`;
+      state.attachedContext = null;
+      hideContextBadge();
+    }
+
+    addMessage('user', fullText);
+    saveHistory();
+    if (state.compareMode) {
+      const compareModel = document.getElementById('compareModelSelect').value;
+      streamResponse(text);                              // primary — persists to history
+      streamResponse(text, { model: compareModel, persist: false }); // compare — ephemeral
+    } else {
+      streamResponse(text);
+    }
   }
 
   // --- Avatar upload ---
