@@ -2129,20 +2129,9 @@
     let fallbackT = 0;
 
     // Try to get mic — silently fall back to animation if denied
+    // Mic disabled — visualizer runs on fallback sine animation
     async function initMic() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        const actx   = new AudioContext();
-        const src    = actx.createMediaStreamSource(stream);
-        analyser     = actx.createAnalyser();
-        analyser.fftSize = BARS * 2;
-        analyser.smoothingTimeConstant = 0.8;
-        src.connect(analyser);
-        dataArr   = new Uint8Array(analyser.frequencyBinCount);
-        micActive = true;
-      } catch {
-        micActive = false; // animate without mic
-      }
+      micActive = false;
     }
 
     function resize() {
@@ -2257,7 +2246,6 @@
     // Delay initial resize until layout is complete
     requestAnimationFrame(() => { resize(); draw(); });
     new ResizeObserver(resize).observe(canvas.parentElement);
-    initMic();
   })();
 
   // --- Avatar upload ---
