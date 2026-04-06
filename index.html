@@ -812,7 +812,7 @@
     applyConfigToUI();
 
     // Then fetch from server (source of truth) and update if richer
-    fetch(`${SERVER_URL}/api/config`)
+    serverFetch(`${SERVER_URL}/api/config`)
       .then(r => r.json())
       .then(data => {
         if (data && Object.keys(data).length > 0) {
@@ -1128,7 +1128,7 @@
     syncModelSelect(appConfig.model);
 
     localStorage.setItem('tgos_config', JSON.stringify(appConfig));
-    fetch(`${SERVER_URL}/api/config`, {
+    serverFetch(`${SERVER_URL}/api/config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(appConfig),
@@ -1669,6 +1669,14 @@
   // --- Local server tools ---
   const SERVER_URL = 'http://127.0.0.1:3001';
 
+  // Wraps fetch with the secret token injected by the server at page-serve time.
+  // Falls back gracefully when opening as file:// (token undefined → requests just fail auth).
+  function serverFetch(url, opts = {}) {
+    const token = window.TGOS_TOKEN || '';
+    opts.headers = Object.assign({}, opts.headers, { 'X-TGOS-Token': token });
+    return fetch(url, opts);
+  }
+
   const TOOLS = [
     {
       type: 'function',
@@ -1801,12 +1809,12 @@
   async function executeTool(name, args) {
     try {
       if (name === 'read_file') {
-        const r = await fetch(`${SERVER_URL}/api/read?path=${encodeURIComponent(args.path)}`);
+        const r = await serverFetch(`${SERVER_URL}/api/read?path=${encodeURIComponent(args.path)}`);
         const j = await r.json();
         return j.error ? `Error: ${j.error}` : j.content;
       }
       if (name === 'write_file') {
-        const r = await fetch(`${SERVER_URL}/api/write`, {
+        const r = await serverFetch(`${SERVER_URL}/api/write`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path: args.path, content: args.content }),
@@ -1815,7 +1823,7 @@
         return j.error ? `Error: ${j.error}` : `Written to ${j.path}`;
       }
       if (name === 'list_dir') {
-        const r = await fetch(`${SERVER_URL}/api/ls${args.path ? '?path=' + encodeURIComponent(args.path) : ''}`);
+        const r = await serverFetch(`${SERVER_URL}/api/ls${args.path ? '?path=' + encodeURIComponent(args.path) : ''}`);
         const j = await r.json();
         if (j.error) return `Error: ${j.error}`;
         return j.files.map(f => `${f.type === 'dir' ? '[dir]' : '     '} ${f.name}`).join('\n');
@@ -1823,7 +1831,7 @@
       if (name === 'run_command') {
         const allowed = await confirmCommand(args.command);
         if (!allowed) return 'User denied command execution.';
-        const r = await fetch(`${SERVER_URL}/api/run`, {
+        const r = await serverFetch(`${SERVER_URL}/api/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ command: args.command, cwd: args.cwd }),
@@ -1832,7 +1840,7 @@
         return j.output || '(no output)';
       }
       if (name === 'web_fetch') {
-        const r = await fetch(`${SERVER_URL}/api/fetch?url=${encodeURIComponent(args.url)}`);
+        const r = await serverFetch(`${SERVER_URL}/api/fetch?url=${encodeURIComponent(args.url)}`);
         const j = await r.json();
         return j.error ? `Error: ${j.error}` : `[${j.status}] ${j.url}\n\n${j.text}`;
       }
@@ -1855,7 +1863,7 @@
         } else {
           return `Unknown Slack action: ${action}`;
         }
-        const r = await fetch(`${SERVER_URL}/api/slack`, {
+        const r = await serverFetch(`${SERVER_URL}/api/slack`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: appConfig.slackToken, method, params }),
@@ -1898,7 +1906,7 @@
         } else {
           return `Unknown Linear action: ${action}`;
         }
-        const r = await fetch(`${SERVER_URL}/api/linear`, {
+        const r = await serverFetch(`${SERVER_URL}/api/linear`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: appConfig.linearKey, query, variables }),
@@ -1924,7 +1932,7 @@
 
   async function pingServer() {
     try {
-      const r = await fetch(`${SERVER_URL}/api/ping`, { signal: AbortSignal.timeout(1500) });
+      const r = await serverFetch(`${SERVER_URL}/api/ping`, { signal: AbortSignal.timeout(1500) });
       const j = await r.json();
       state.serverAvailable = !!j.ok;
     } catch {
