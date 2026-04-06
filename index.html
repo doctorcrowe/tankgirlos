@@ -518,7 +518,7 @@
     <!-- Model -->
     <div style="margin-bottom:16px;">
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">MODEL</div>
-      <input id="settingModel" type="text" value="accounts/fireworks/routers/kimi-k2p5-turbo"
+      <input id="settingModel" type="text" value="accounts/fireworks/models/llama4-maverick-instruct-basic"
         style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:13px;padding:4px 8px;" />
     </div>
 
@@ -698,6 +698,7 @@
   };
 
   const MODELS = [
+    { group: 'FRONTIER',  id: 'accounts/fireworks/models/llama4-maverick-instruct-basic', label: 'Llama 4 Maverick' },
     { group: 'FRONTIER',  id: 'accounts/fireworks/models/kimi-k2p5',            label: 'Kimi K2.5' },
     { group: 'FRONTIER',  id: 'accounts/fireworks/models/kimi-k2-0905',          label: 'Kimi K2 0905' },
     { group: 'FRONTIER',  id: 'accounts/fireworks/models/deepseek-v3p1',         label: 'DeepSeek V3.1' },
@@ -783,7 +784,7 @@
     charName: 'INCREDIBLE HULK',
     bio: "The incredible hulk, you won't like him when he's angry.",
     apiKey: '',
-    model: 'accounts/fireworks/routers/kimi-k2p5-turbo',
+    model: 'accounts/fireworks/models/llama4-maverick-instruct-basic',
   };
 
   // Load saved settings from localStorage on page load
@@ -1133,7 +1134,7 @@
     appConfig.charName    = document.getElementById('settingCharName').value.trim() || 'INCREDIBLE HULK';
     appConfig.bio         = document.getElementById('settingBio').value.trim();
     appConfig.apiKey      = document.getElementById('settingApiKey').value.trim();
-    appConfig.model       = document.getElementById('settingModel').value.trim() || 'accounts/fireworks/routers/kimi-k2p5-turbo';
+    appConfig.model       = document.getElementById('settingModel').value.trim() || 'accounts/fireworks/models/llama4-maverick-instruct-basic';
     appConfig.slackToken  = document.getElementById('settingSlackToken').value.trim();
     appConfig.linearKey   = document.getElementById('settingLinearKey').value.trim();
 
