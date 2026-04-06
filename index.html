@@ -177,6 +177,8 @@
   .input-box {
     flex: 1; background: transparent; border: none; outline: none;
     color: var(--text); font-family: inherit; font-size: 16px;
+    resize: none; overflow-y: hidden; line-height: 1.5;
+    min-height: 24px; max-height: 200px; padding: 2px 0;
   }
   .input-box::placeholder { color: var(--muted); }
   .send-btn {
@@ -323,6 +325,7 @@
 
     <div class="inference-bar" id="inferenceBar">
       <span class="inference-label">// inference</span>
+      <span id="serverDot" title="Local server offline — run: node server.js" style="width:7px;height:7px;border-radius:50%;background:#444;flex-shrink:0;cursor:default;transition:background 0.4s;"></span>
       <div class="thinking-dots" id="thinkingDots" style="display:none">
         <span></span><span></span><span></span>
       </div>
@@ -353,7 +356,7 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;width:100%;">
         <span class="prompt-symbol">&gt;_</span>
-        <input class="input-box" id="userInput" placeholder="enter command..." autocomplete="off" />
+        <textarea class="input-box" id="userInput" placeholder="enter command... (shift+enter for new line)" autocomplete="off" rows="1"></textarea>
         <button id="attachBtn" title="Attach context" style="background:none;border:1px solid rgba(255,45,120,0.3);color:var(--muted);font-family:inherit;font-size:13px;padding:4px 8px;cursor:pointer;flex-shrink:0;">📎</button>
         <button class="send-btn" id="sendBtn">Execute</button>
       </div>
@@ -606,6 +609,7 @@
     compareMode: false,
     attachedContext: null, // { name, content }
     activeConvId: null,
+    serverAvailable: false,
   };
 
   // --- Mood system ---
@@ -1586,8 +1590,245 @@
     m.scrollTop = m.scrollHeight;
   }
 
+  // --- Local server tools ---
+  const SERVER_URL = 'http://127.0.0.1:3001';
+
+  const TOOLS = [
+    {
+      type: 'function',
+      function: {
+        name: 'read_file',
+        description: 'Read the contents of a file on the local filesystem.',
+        parameters: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', description: 'Absolute or relative file path to read.' },
+          },
+          required: ['path'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'write_file',
+        description: 'Write or overwrite a file on the local filesystem.',
+        parameters: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', description: 'File path to write.' },
+            content: { type: 'string', description: 'Content to write into the file.' },
+          },
+          required: ['path', 'content'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'list_dir',
+        description: 'List files and folders in a directory.',
+        parameters: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', description: 'Directory path to list. Defaults to current working directory.' },
+          },
+          required: [],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'run_command',
+        description: 'Run a shell command on the local machine and return the output.',
+        parameters: {
+          type: 'object',
+          properties: {
+            command: { type: 'string', description: 'Shell command to execute.' },
+            cwd: { type: 'string', description: 'Working directory for the command (optional).' },
+          },
+          required: ['command'],
+        },
+      },
+    },
+  ];
+
+  async function executeTool(name, args) {
+    try {
+      if (name === 'read_file') {
+        const r = await fetch(`${SERVER_URL}/api/read?path=${encodeURIComponent(args.path)}`);
+        const j = await r.json();
+        return j.error ? `Error: ${j.error}` : j.content;
+      }
+      if (name === 'write_file') {
+        const r = await fetch(`${SERVER_URL}/api/write`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: args.path, content: args.content }),
+        });
+        const j = await r.json();
+        return j.error ? `Error: ${j.error}` : `Written to ${j.path}`;
+      }
+      if (name === 'list_dir') {
+        const r = await fetch(`${SERVER_URL}/api/ls${args.path ? '?path=' + encodeURIComponent(args.path) : ''}`);
+        const j = await r.json();
+        if (j.error) return `Error: ${j.error}`;
+        return j.files.map(f => `${f.type === 'dir' ? '[dir]' : '     '} ${f.name}`).join('\n');
+      }
+      if (name === 'run_command') {
+        const r = await fetch(`${SERVER_URL}/api/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: args.command, cwd: args.cwd }),
+        });
+        const j = await r.json();
+        return j.output || '(no output)';
+      }
+      return `Unknown tool: ${name}`;
+    } catch (err) {
+      return `Tool error: ${err.message}`;
+    }
+  }
+
+  async function pingServer() {
+    try {
+      const r = await fetch(`${SERVER_URL}/api/ping`, { signal: AbortSignal.timeout(1500) });
+      const j = await r.json();
+      state.serverAvailable = !!j.ok;
+    } catch {
+      state.serverAvailable = false;
+    }
+    const dot = document.getElementById('serverDot');
+    if (state.serverAvailable) {
+      dot.style.background = '#39ff14';
+      dot.title = 'Local server online — file + terminal access enabled';
+    } else {
+      dot.style.background = '#444';
+      dot.title = 'Local server offline — run: node server.js';
+    }
+  }
+
+  // Ping on load and every 15s
+  pingServer();
+  setInterval(pingServer, 15000);
+
+  async function handleSendWithTools(userText) {
+    if (!appConfig.apiKey) {
+      addMessage('assistant', '⚠ No API key set. Click ⚙ to add your Fireworks API key.');
+      return;
+    }
+
+    state.isStreaming = true;
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('thinkingDots').style.display = 'flex';
+    setTalking(true);
+
+    // Non-streaming tool loop: keep calling until no more tool calls
+    const apiMessages = [
+      { role: 'system', content: buildSystemMessage() },
+      ...state.messages.slice(0, -1), // exclude the placeholder we pushed
+    ];
+
+    let finalText = '';
+    let toolCallLog = [];
+
+    try {
+      for (let round = 0; round < 8; round++) {
+        const resp = await fetch('https://api.fireworks.ai/inference/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${appConfig.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: appConfig.model,
+            messages: apiMessages,
+            tools: TOOLS,
+            tool_choice: 'auto',
+            max_tokens: { 1: 300, 2: 500, 3: 1000, 4: 2048, 5: 4096 }[currentMood] ?? 1024,
+          }),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.text();
+          finalText = `⚠ API error ${resp.status}: ${err.slice(0, 120)}`;
+          break;
+        }
+
+        const data = await resp.json();
+        const choice = data.choices?.[0];
+        const msg = choice?.message;
+
+        if (!msg) { finalText = '⚠ No response from API.'; break; }
+
+        // If there are tool calls, execute them and loop
+        if (msg.tool_calls && msg.tool_calls.length > 0) {
+          apiMessages.push(msg); // assistant turn with tool_calls
+          for (const tc of msg.tool_calls) {
+            const args = JSON.parse(tc.function.arguments || '{}');
+            const toolName = tc.function.name;
+            toolCallLog.push(`> ${toolName}(${JSON.stringify(args)})`);
+            const result = await executeTool(toolName, args);
+            apiMessages.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: String(result),
+            });
+          }
+          // Continue loop to get next model response
+        } else {
+          // Final answer
+          finalText = msg.content || '⚠ Empty response.';
+          break;
+        }
+      }
+    } catch (err) {
+      finalText = `⚠ Network error: ${err.message}`;
+    }
+
+    // Show tool calls as a collapsed trace above the answer
+    let displayText = finalText;
+    if (toolCallLog.length > 0) {
+      displayText = `<details style="margin-bottom:8px;opacity:0.6;font-size:11px;"><summary style="cursor:pointer;color:var(--accent2);">[${toolCallLog.length} tool call${toolCallLog.length > 1 ? 's' : ''}]</summary><pre style="margin:4px 0;white-space:pre-wrap;">${toolCallLog.join('\n')}</pre></details>` + renderMarkdown(finalText);
+    }
+
+    // Write final answer into the placeholder message div
+    const msgs = document.getElementById('messages');
+    const placeholders = msgs.querySelectorAll('.msg.tank');
+    const last = placeholders[placeholders.length - 1];
+    const textDiv = last?.querySelector('.text');
+    if (textDiv) {
+      if (toolCallLog.length > 0) {
+        textDiv.innerHTML = displayText;
+      } else {
+        setMessageHTML(textDiv, finalText);
+      }
+    }
+
+    state.messages[state.messages.length - 1].content = finalText;
+    state.tokenCount += Math.ceil(finalText.length / 4);
+    document.getElementById('inferenceTokens').textContent = `${state.tokenCount} tokens`;
+    document.getElementById('statTokens').textContent = state.tokenCount;
+
+    state.isStreaming = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('thinkingDots').style.display = 'none';
+    setTalking(false);
+    scrollToBottom();
+    saveHistory();
+    summarizeIfNeeded();
+  }
+
   // --- Send button ---
   document.getElementById('sendBtn').addEventListener('click', handleSend);
+  // Auto-expand textarea as user types or pastes
+  document.getElementById('userInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    this.style.overflowY = this.scrollHeight > 200 ? 'auto' : 'hidden';
+  });
+
   document.getElementById('userInput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   });
@@ -1607,6 +1848,13 @@
     }
 
     addMessage('user', fullText);
+    // Pre-push assistant placeholder so handleSendWithTools can fill it in
+    if (state.serverAvailable && !state.compareMode) {
+      addMessage('assistant', '⟳ thinking...', true);
+      saveHistory();
+      handleSendWithTools(fullText);
+      return;
+    }
     saveHistory();
     if (state.compareMode) {
       const compareModel = document.getElementById('compareModelSelect').value;
