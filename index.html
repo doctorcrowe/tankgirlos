@@ -788,16 +788,7 @@
   };
 
   // Load saved settings from localStorage on page load
-  (function loadSettings() {
-    const saved = localStorage.getItem('tgos_config');
-    if (saved) {
-      try {
-        Object.assign(appConfig, JSON.parse(saved));
-      } catch(e) {
-        console.warn('tgos_config load failed', e);
-      }
-    }
-    // Always sync UI from appConfig (covers both fresh load and saved state)
+  function applyConfigToUI() {
     document.getElementById('settingCharName').value = appConfig.charName;
     document.getElementById('settingBio').value = appConfig.bio;
     document.getElementById('settingApiKey').value = appConfig.apiKey;
@@ -810,6 +801,27 @@
       appConfig.model.split('/').pop().toUpperCase().slice(0,10);
     populateModelSelect();
     updateWelcomeMessage();
+  }
+
+  (function loadSettings() {
+    // Try localStorage first so UI appears instantly
+    const saved = localStorage.getItem('tgos_config');
+    if (saved) {
+      try { Object.assign(appConfig, JSON.parse(saved)); } catch(e) {}
+    }
+    applyConfigToUI();
+
+    // Then fetch from server (source of truth) and update if richer
+    fetch(`${SERVER_URL}/api/config`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          Object.assign(appConfig, data);
+          localStorage.setItem('tgos_config', JSON.stringify(appConfig));
+          applyConfigToUI();
+        }
+      })
+      .catch(() => {}); // server offline — localStorage is fine
   })();
 
   // --- Conversation history persistence ---
@@ -1116,6 +1128,11 @@
     syncModelSelect(appConfig.model);
 
     localStorage.setItem('tgos_config', JSON.stringify(appConfig));
+    fetch(`${SERVER_URL}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(appConfig),
+    }).catch(() => {});
     updateWelcomeMessage();
     closeSettings();
   });

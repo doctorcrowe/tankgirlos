@@ -17,6 +17,27 @@ app.get('/api/ping', (req, res) => {
   res.json({ ok: true, cwd: process.cwd() });
 });
 
+// Persist config to disk so keys survive origin/browser changes
+const CONFIG_FILE = path.join(__dirname, '.tgos-config.json');
+
+app.get('/api/config', (req, res) => {
+  try {
+    const data = fs.existsSync(CONFIG_FILE)
+      ? JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'))
+      : {};
+    res.json(data);
+  } catch { res.json({}); }
+});
+
+app.post('/api/config', (req, res) => {
+  try {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(req.body, null, 2), 'utf8');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Read a file
 app.get('/api/read', (req, res) => {
   try {
