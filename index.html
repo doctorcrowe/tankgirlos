@@ -811,10 +811,19 @@
   }
 
   (function loadSettings() {
-    // Try localStorage first so UI appears instantly
+    // Clear stale config if it still has the old Tank Girl default
     const saved = localStorage.getItem('tgos_config');
-    if (saved) {
-      try { Object.assign(appConfig, JSON.parse(saved)); } catch(e) {}
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.charName && parsed.charName.toUpperCase() === 'TANK GIRL') {
+        localStorage.removeItem('tgos_config');
+      }
+    } catch(e) {}
+
+    // Try localStorage first so UI appears instantly
+    const savedClean = localStorage.getItem('tgos_config');
+    if (savedClean) {
+      try { Object.assign(appConfig, JSON.parse(savedClean)); } catch(e) {}
     }
     applyConfigToUI();
 
