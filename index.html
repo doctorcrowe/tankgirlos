@@ -587,6 +587,19 @@
 <input type="file" id="avatarFileInput" accept="image/*" style="display:none" />
 
 
+<!-- Command confirmation overlay -->
+<div id="cmdConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:var(--panel-bg);border:1px solid #ff4444;padding:24px;width:500px;font-family:'Courier New',monospace;display:flex;flex-direction:column;gap:16px;">
+    <div style="color:#ff4444;font-size:11px;letter-spacing:3px;text-transform:uppercase;">⚠ Command Execution Request</div>
+    <div style="color:var(--muted);font-size:11px;line-height:1.6;">The model wants to run this shell command on your machine:</div>
+    <pre id="cmdConfirmText" style="background:#111;border:1px solid rgba(255,68,68,0.3);padding:12px;color:#fff;font-size:13px;margin:0;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;"></pre>
+    <div style="display:flex;gap:10px;">
+      <button id="cmdAllowBtn" style="flex:1;background:#ff4444;color:white;border:none;padding:8px;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Allow</button>
+      <button id="cmdDenyBtn" style="flex:1;background:#111;color:var(--muted);border:1px solid rgba(255,255,255,0.15);padding:8px;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">Deny</button>
+    </div>
+  </div>
+</div>
+
 <!-- Context attach overlay -->
 <div id="contextOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;">
   <div style="background:var(--panel-bg);border:1px solid var(--accent2);padding:20px;width:480px;max-height:80vh;display:flex;flex-direction:column;gap:12px;font-family:'Courier New',monospace;">
@@ -1734,6 +1747,23 @@
     },
   ];
 
+  function confirmCommand(command) {
+    return new Promise(resolve => {
+      document.getElementById('cmdConfirmText').textContent = command;
+      document.getElementById('cmdConfirmOverlay').style.display = 'flex';
+      const allow = document.getElementById('cmdAllowBtn');
+      const deny  = document.getElementById('cmdDenyBtn');
+      function cleanup(result) {
+        document.getElementById('cmdConfirmOverlay').style.display = 'none';
+        allow.replaceWith(allow.cloneNode(true));
+        deny.replaceWith(deny.cloneNode(true));
+        resolve(result);
+      }
+      document.getElementById('cmdAllowBtn').onclick = () => cleanup(true);
+      document.getElementById('cmdDenyBtn').onclick  = () => cleanup(false);
+    });
+  }
+
   async function executeTool(name, args) {
     try {
       if (name === 'read_file') {
@@ -1757,6 +1787,8 @@
         return j.files.map(f => `${f.type === 'dir' ? '[dir]' : '     '} ${f.name}`).join('\n');
       }
       if (name === 'run_command') {
+        const allowed = await confirmCommand(args.command);
+        if (!allowed) return 'User denied command execution.';
         const r = await fetch(`${SERVER_URL}/api/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
