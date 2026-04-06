@@ -339,7 +339,7 @@
     <div class="messages" id="messages">
       <div class="msg tank" id="welcomeMsg">
         <div class="speaker" id="welcomeSpeaker">[ TANK_GIRL ]</div>
-        <div class="text" id="welcomeText">"System's hot. Before we blow anything up —"<br/>
+        <div class="text" id="welcomeText">"HULK READY. Before we smash anything —"<br/>
           <span style="color:var(--accent2);">&gt; Click ⚙ (top right) to add your Fireworks API key</span><br/>
           <span style="color:var(--accent2);">&gt; Click the avatar (right panel) to upload a character image</span><br/>
           <span style="color:var(--accent2);">&gt; Adjust the mood slider in settings</span><br/>
@@ -370,10 +370,10 @@
 
     <div class="sprite-container" id="spriteContainer">
       <div class="sprite-glow" id="spriteGlow"></div>
-      <span class="sprite-emoji" id="spriteEmoji" title="Click to upload avatar">🤘</span>
+      <span class="sprite-emoji" id="spriteEmoji" title="Click to upload avatar">💚</span>
     </div>
 
-    <div class="char-name" id="charNameDisplay">TANK GIRL</div>
+    <div class="char-name" id="charNameDisplay">INCREDIBLE HULK</div>
     <div class="char-status">
       <div class="status-dot"></div>
       <span class="status-text" id="moodLabel">ONLINE // FERAL</span>
@@ -486,7 +486,7 @@
     <div style="margin-bottom:12px;">
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">CHARACTER NAME</div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <input id="settingCharName" type="text" value="TANK GIRL" maxlength="40"
+        <input id="settingCharName" type="text" value="INCREDIBLE HULK" maxlength="40"
           style="flex:1;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:13px;padding:4px 8px;" />
         <button id="wikiFillBtn" title="Auto-fill bio from Wikipedia"
           style="background:#111;border:1px solid rgba(255,45,120,0.4);color:var(--accent);font-family:inherit;font-size:10px;padding:4px 8px;cursor:pointer;white-space:nowrap;letter-spacing:1px;">
@@ -498,7 +498,7 @@
     <!-- Bio -->
     <div style="margin-bottom:12px;">
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">CHARACTER BIO (injected into AI)</div>
-      <textarea id="settingBio" rows="3" placeholder="Lives in a tank. Hates rules."
+      <textarea id="settingBio" rows="3" placeholder="Hulk smash. Hulk answer questions."
         style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:13px;padding:4px 8px;resize:vertical;"></textarea>
       <div style="color:var(--muted);font-size:10px;margin-top:3px;line-height:1.5;">
         Original character? Write as much as you can here — personality, backstory, speech style, quirks. The more you put in, the more you get out.
@@ -780,8 +780,8 @@
   const appConfig = {
     slackToken: '',
     linearKey: '',
-    charName: 'TANK GIRL',
-    bio: "Tank Girl is a foul-mouthed punk rebel who lives in a tank in post-apocalyptic Australia. She's chaotic, irreverent, and fiercely anti-authority. She fights dirty, drinks hard, and doesn't take orders from anyone. She speaks in short punchy sentences with a lot of attitude. She's brilliant but hides it behind chaos.",
+    charName: 'INCREDIBLE HULK',
+    bio: "The Incredible Hulk is a giant green powerhouse — brilliant scientist Bruce Banner trapped inside a rage-fueled behemoth. Speaks in short, blunt sentences. Answers questions directly and with confidence. Smashes through complexity to find simple solutions. Gets impatient with unnecessary jargon. Surprisingly wise underneath the fury.",
     apiKey: '',
     model: 'accounts/fireworks/routers/kimi-k2p5-turbo',
   };
@@ -1037,12 +1037,12 @@
   renderThreadsList();
 
   function updateWelcomeMessage() {
-    const name = (appConfig.charName || 'TANK GIRL').toUpperCase();
-    const isDefault = name === 'TANK GIRL';
+    const name = (appConfig.charName || 'INCREDIBLE HULK').toUpperCase();
+    const isDefault = name === 'INCREDIBLE HULK';
     document.getElementById('welcomeSpeaker').textContent = `[ ${name.replace(/ /g,'_')} ]`;
     const textEl = document.getElementById('welcomeText');
     if (isDefault) {
-      textEl.innerHTML = `"System's hot. Before we blow anything up —"<br/>
+      textEl.innerHTML = `"HULK READY. Before we smash anything —"<br/>
         <span style="color:var(--accent2);">&gt; Click ⚙ (top right) to add your Fireworks API key</span><br/>
         <span style="color:var(--accent2);">&gt; Click the avatar (right panel) to upload a character image</span><br/>
         <span style="color:var(--accent2);">&gt; Adjust the mood slider in settings</span><br/>
@@ -1121,7 +1121,7 @@
   });
 
   document.getElementById('applySettings').addEventListener('click', () => {
-    appConfig.charName    = document.getElementById('settingCharName').value.trim() || 'TANK GIRL';
+    appConfig.charName    = document.getElementById('settingCharName').value.trim() || 'INCREDIBLE HULK';
     appConfig.bio         = document.getElementById('settingBio').value.trim();
     appConfig.apiKey      = document.getElementById('settingApiKey').value.trim();
     appConfig.model       = document.getElementById('settingModel').value.trim() || 'accounts/fireworks/routers/kimi-k2p5-turbo';
@@ -1168,7 +1168,7 @@
     if (!skin || skin.version !== 1) return;
 
     // Character name + bio
-    appConfig.charName = skin.name || 'TANK GIRL';
+    appConfig.charName = skin.name || 'INCREDIBLE HULK';
     appConfig.bio = skin.bio || '';
     document.getElementById('settingCharName').value = appConfig.charName;
     document.getElementById('settingBio').value = appConfig.bio;
