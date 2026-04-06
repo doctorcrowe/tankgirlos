@@ -58,13 +58,13 @@ The server gives Tank Girl OS full filesystem and terminal access — similar to
 | `list_dir` | Browse the filesystem |
 | `run_command` | Run shell commands (requires your approval each time) |
 | `web_fetch` | Fetch any URL and return readable text |
-| `slack` | List channels, read history, search, send messages |
+| `slack` | List channels, read history, search, send/edit/delete messages |
 | `linear` | List teams/issues, get details, create issues |
 
 Tool calls show as a collapsible trace above each answer so you can see what the model did.
 
 ### Integrations
-- **Slack** — add a bot token in Settings → INTEGRATIONS. Create a bot at [api.slack.com/apps](https://api.slack.com/apps) with scopes: `channels:read channels:history groups:read groups:history search:read chat:write`
+- **Slack** — add a bot token in Settings → INTEGRATIONS. Create a bot at [api.slack.com/apps](https://api.slack.com/apps) with scopes: `channels:read channels:history groups:read groups:history search:read chat:write`. Use channel names — the AI resolves them to IDs automatically via `list_channels`
 - **Linear** — add an API key in Settings → INTEGRATIONS (Settings → API → Personal API keys in Linear)
 
 ### Productivity

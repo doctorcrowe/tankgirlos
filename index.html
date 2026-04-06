@@ -803,6 +803,14 @@
     updateWelcomeMessage();
   }
 
+  // --- Server connection (defined early so loadSettings can use it) ---
+  const SERVER_URL = 'http://127.0.0.1:3001';
+  function serverFetch(url, opts = {}) {
+    const token = window.TGOS_TOKEN || '';
+    opts.headers = Object.assign({}, opts.headers, { 'X-TGOS-Token': token });
+    return fetch(url, opts);
+  }
+
   (function loadSettings() {
     // Try localStorage first so UI appears instantly
     const saved = localStorage.getItem('tgos_config');
@@ -1666,16 +1674,6 @@
     m.scrollTop = m.scrollHeight;
   }
 
-  // --- Local server tools ---
-  const SERVER_URL = 'http://127.0.0.1:3001';
-
-  // Wraps fetch with the secret token injected by the server at page-serve time.
-  // Falls back gracefully when opening as file:// (token undefined → requests just fail auth).
-  function serverFetch(url, opts = {}) {
-    const token = window.TGOS_TOKEN || '';
-    opts.headers = Object.assign({}, opts.headers, { 'X-TGOS-Token': token });
-    return fetch(url, opts);
-  }
 
   const TOOLS = [
     {
@@ -1739,14 +1737,15 @@
       type: 'function',
       function: {
         name: 'slack',
-        description: 'Interact with Slack. Actions: list_channels, read_channel (get recent messages), search (search all messages), send_message.',
+        description: 'Interact with Slack. Actions: list_channels, read_channel, search, send_message, delete_message, edit_message. IMPORTANT: Most actions require a channel ID (not name). If given a channel name, first call list_channels to resolve it to an ID.',
         parameters: {
           type: 'object',
           properties: {
-            action: { type: 'string', enum: ['list_channels', 'read_channel', 'search', 'send_message'] },
-            channel: { type: 'string', description: 'Channel name or ID (for read_channel / send_message).' },
+            action: { type: 'string', enum: ['list_channels', 'read_channel', 'search', 'send_message', 'delete_message', 'edit_message'] },
+            channel: { type: 'string', description: 'Channel ID (e.g. C096ZNWKNHW). If you only have a name, use list_channels first to get the ID.' },
             query:   { type: 'string', description: 'Search query (for search action).' },
             text:    { type: 'string', description: 'Message text (for send_message action).' },
+            ts:      { type: 'string', description: 'Message timestamp (for delete_message action, from read_channel results).' },
             limit:   { type: 'number', description: 'Max messages to return (default 20).' },
           },
           required: ['action'],
@@ -1846,7 +1845,7 @@
       }
       if (name === 'slack') {
         if (!appConfig.slackToken) return 'No Slack token set — add it in ⚙ Settings → INTEGRATIONS.';
-        const { action, channel, query, text, limit = 20 } = args;
+        const { action, channel, query, text, ts, limit = 20 } = args;
         let method, params;
         if (action === 'list_channels') {
           method = 'conversations.list';
@@ -1857,6 +1856,12 @@
         } else if (action === 'search') {
           method = 'search.messages';
           params = { query, count: limit };
+        } else if (action === 'delete_message') {
+          method = 'chat.delete';
+          params = { channel, ts };
+        } else if (action === 'edit_message') {
+          method = 'chat.update';
+          params = { channel, ts, text };
         } else if (action === 'send_message') {
           method = 'chat.postMessage';
           params = { channel, text };
@@ -1874,10 +1879,16 @@
           return j.channels.map(c => `#${c.name} (${c.id})${c.is_private ? ' [private]' : ''}`).join('\n');
         }
         if (action === 'read_channel') {
-          return j.messages.map(m => `[${new Date(m.ts * 1000).toLocaleString()}] ${m.user || m.bot_id || '?'}: ${m.text}`).join('\n');
+          return j.messages.map(m => `[${new Date(m.ts * 1000).toLocaleString()}] (ts:${m.ts}) ${m.user || m.bot_id || '?'}: ${m.text}`).join('\n');
         }
         if (action === 'search') {
           return j.messages.matches.map(m => `#${m.channel.name} | ${m.username}: ${m.text}`).join('\n');
+        }
+        if (action === 'delete_message') {
+          return 'Message deleted.';
+        }
+        if (action === 'edit_message') {
+          return 'Message updated.';
         }
         if (action === 'send_message') {
           return `Message sent to ${channel}.`;

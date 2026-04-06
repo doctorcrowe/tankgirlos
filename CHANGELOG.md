@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.1
+
+### Slack improvements
+- **Delete messages** — new `delete_message` action uses `chat.delete`; requires `ts` from `read_channel`
+- **Edit messages** — new `edit_message` action uses `chat.update`; pass `ts` + new `text`
+- **Channel name resolution** — AI now calls `list_channels` automatically when given a channel name instead of an ID; no more manual ID lookup
+- **Raw `ts` in read_channel** — message history now includes `(ts:...)` alongside the human date so the model can reference and act on specific messages
+- **Settings button fix** — `SERVER_URL` and `serverFetch` moved before `loadSettings` to prevent a JS crash that broke the settings panel on load
+
+---
+
 ## v1.3.0
 
 ### Local Server & Tool Calling
