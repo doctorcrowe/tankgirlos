@@ -551,6 +551,29 @@
     </div>
 
     <div style="border-top:1px solid rgba(255,45,120,0.2);padding-top:12px;margin-top:4px;">
+      <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">INTEGRATIONS</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:10px;line-height:1.5;">Tokens stay on your local server — never sent to Fireworks or anywhere else.</div>
+
+      <div style="margin-bottom:10px;">
+        <div style="color:var(--muted);font-size:10px;letter-spacing:1px;margin-bottom:3px;">SLACK BOT TOKEN</div>
+        <input id="settingSlackToken" type="password" placeholder="xoxb-..."
+          style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:13px;padding:4px 8px;" />
+        <div style="color:var(--muted);font-size:10px;margin-top:2px;">
+          Make a Slack app at api.slack.com → OAuth → Bot Token. Needs <code style="font-size:10px;">channels:read channels:history search:read chat:write</code> scopes.
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <div style="color:var(--muted);font-size:10px;letter-spacing:1px;margin-bottom:3px;">LINEAR API KEY</div>
+        <input id="settingLinearKey" type="password" placeholder="lin_api_..."
+          style="width:100%;background:#111;border:1px solid rgba(255,45,120,0.3);color:var(--text);font-family:inherit;font-size:13px;padding:4px 8px;" />
+        <div style="color:var(--muted);font-size:10px;margin-top:2px;">
+          Linear → Settings → API → Personal API keys.
+        </div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,45,120,0.2);padding-top:12px;margin-top:4px;">
       <div style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">HISTORY</div>
       <div style="color:var(--muted);font-size:11px;margin-bottom:8px;line-height:1.5;">Conversations are saved in your browser so your character remembers everything across sessions.</div>
       <button id="clearHistoryBtn"
@@ -742,6 +765,8 @@
 
   // --- Settings panel ---
   const appConfig = {
+    slackToken: '',
+    linearKey: '',
     charName: 'TANK GIRL',
     bio: "Tank Girl is a foul-mouthed punk rebel who lives in a tank in post-apocalyptic Australia. She's chaotic, irreverent, and fiercely anti-authority. She fights dirty, drinks hard, and doesn't take orders from anyone. She speaks in short punchy sentences with a lot of attitude. She's brilliant but hides it behind chaos.",
     apiKey: '',
@@ -763,6 +788,8 @@
     document.getElementById('settingBio').value = appConfig.bio;
     document.getElementById('settingApiKey').value = appConfig.apiKey;
     document.getElementById('settingModel').value = appConfig.model;
+    document.getElementById('settingSlackToken').value = appConfig.slackToken || '';
+    document.getElementById('settingLinearKey').value = appConfig.linearKey || '';
     document.getElementById('charNameDisplay').textContent = appConfig.charName.toUpperCase();
     state.characterName = appConfig.charName.toUpperCase();
     document.getElementById('statModel').textContent =
@@ -1061,10 +1088,12 @@
   });
 
   document.getElementById('applySettings').addEventListener('click', () => {
-    appConfig.charName = document.getElementById('settingCharName').value.trim() || 'TANK GIRL';
-    appConfig.bio      = document.getElementById('settingBio').value.trim();
-    appConfig.apiKey   = document.getElementById('settingApiKey').value.trim();
-    appConfig.model    = document.getElementById('settingModel').value.trim() || 'accounts/fireworks/routers/kimi-k2p5-turbo';
+    appConfig.charName    = document.getElementById('settingCharName').value.trim() || 'TANK GIRL';
+    appConfig.bio         = document.getElementById('settingBio').value.trim();
+    appConfig.apiKey      = document.getElementById('settingApiKey').value.trim();
+    appConfig.model       = document.getElementById('settingModel').value.trim() || 'accounts/fireworks/routers/kimi-k2p5-turbo';
+    appConfig.slackToken  = document.getElementById('settingSlackToken').value.trim();
+    appConfig.linearKey   = document.getElementById('settingLinearKey').value.trim();
 
     state.characterName = appConfig.charName.toUpperCase();
     document.getElementById('charNameDisplay').textContent = state.characterName;
@@ -1640,6 +1669,57 @@
     {
       type: 'function',
       function: {
+        name: 'web_fetch',
+        description: 'Fetch a URL and return its readable text content. Use for reading documentation, articles, GitHub issues, or any public webpage.',
+        parameters: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'The full URL to fetch.' },
+          },
+          required: ['url'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'slack',
+        description: 'Interact with Slack. Actions: list_channels, read_channel (get recent messages), search (search all messages), send_message.',
+        parameters: {
+          type: 'object',
+          properties: {
+            action: { type: 'string', enum: ['list_channels', 'read_channel', 'search', 'send_message'] },
+            channel: { type: 'string', description: 'Channel name or ID (for read_channel / send_message).' },
+            query:   { type: 'string', description: 'Search query (for search action).' },
+            text:    { type: 'string', description: 'Message text (for send_message action).' },
+            limit:   { type: 'number', description: 'Max messages to return (default 20).' },
+          },
+          required: ['action'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'linear',
+        description: 'Interact with Linear. Actions: list_issues, get_issue, create_issue, list_teams.',
+        parameters: {
+          type: 'object',
+          properties: {
+            action:      { type: 'string', enum: ['list_issues', 'get_issue', 'create_issue', 'list_teams'] },
+            issue_id:    { type: 'string', description: 'Issue ID (for get_issue).' },
+            title:       { type: 'string', description: 'Issue title (for create_issue).' },
+            description: { type: 'string', description: 'Issue description in markdown (for create_issue).' },
+            team_id:     { type: 'string', description: 'Team ID (for create_issue or filtering list_issues).' },
+            filter:      { type: 'string', description: 'Optional status filter for list_issues e.g. "In Progress".' },
+          },
+          required: ['action'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
         name: 'run_command',
         description: 'Run a shell command on the local machine and return the output.',
         parameters: {
@@ -1684,6 +1764,88 @@
         });
         const j = await r.json();
         return j.output || '(no output)';
+      }
+      if (name === 'web_fetch') {
+        const r = await fetch(`${SERVER_URL}/api/fetch?url=${encodeURIComponent(args.url)}`);
+        const j = await r.json();
+        return j.error ? `Error: ${j.error}` : `[${j.status}] ${j.url}\n\n${j.text}`;
+      }
+      if (name === 'slack') {
+        if (!appConfig.slackToken) return 'No Slack token set — add it in ⚙ Settings → INTEGRATIONS.';
+        const { action, channel, query, text, limit = 20 } = args;
+        let method, params;
+        if (action === 'list_channels') {
+          method = 'conversations.list';
+          params = { types: 'public_channel,private_channel', limit: 100, exclude_archived: true };
+        } else if (action === 'read_channel') {
+          method = 'conversations.history';
+          params = { channel, limit };
+        } else if (action === 'search') {
+          method = 'search.messages';
+          params = { query, count: limit };
+        } else if (action === 'send_message') {
+          method = 'chat.postMessage';
+          params = { channel, text };
+        } else {
+          return `Unknown Slack action: ${action}`;
+        }
+        const r = await fetch(`${SERVER_URL}/api/slack`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: appConfig.slackToken, method, params }),
+        });
+        const j = await r.json();
+        if (!j.ok) return `Slack error: ${j.error}`;
+        if (action === 'list_channels') {
+          return j.channels.map(c => `#${c.name} (${c.id})${c.is_private ? ' [private]' : ''}`).join('\n');
+        }
+        if (action === 'read_channel') {
+          return j.messages.map(m => `[${new Date(m.ts * 1000).toLocaleString()}] ${m.user || m.bot_id || '?'}: ${m.text}`).join('\n');
+        }
+        if (action === 'search') {
+          return j.messages.matches.map(m => `#${m.channel.name} | ${m.username}: ${m.text}`).join('\n');
+        }
+        if (action === 'send_message') {
+          return `Message sent to ${channel}.`;
+        }
+      }
+      if (name === 'linear') {
+        if (!appConfig.linearKey) return 'No Linear API key set — add it in ⚙ Settings → INTEGRATIONS.';
+        const { action, issue_id, title, description, team_id, filter } = args;
+        let query, variables = {};
+        if (action === 'list_teams') {
+          query = `{ teams { nodes { id name key } } }`;
+        } else if (action === 'list_issues') {
+          query = `query($filter: IssueFilter) { issues(filter: $filter, first: 25) { nodes { id identifier title state { name } assignee { name } priority url } } }`;
+          variables.filter = {};
+          if (team_id) variables.filter.team = { id: { eq: team_id } };
+          if (filter)  variables.filter.state = { name: { eq: filter } };
+        } else if (action === 'get_issue') {
+          query = `query($id: String!) { issue(id: $id) { id identifier title description state { name } assignee { name } priority url comments { nodes { body user { name } createdAt } } } }`;
+          variables.id = issue_id;
+        } else if (action === 'create_issue') {
+          query = `mutation($input: IssueCreateInput!) { issueCreate(input: $input) { success issue { id identifier title url } } }`;
+          variables.input = { title, description, teamId: team_id };
+        } else {
+          return `Unknown Linear action: ${action}`;
+        }
+        const r = await fetch(`${SERVER_URL}/api/linear`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: appConfig.linearKey, query, variables }),
+        });
+        const j = await r.json();
+        if (j.errors) return `Linear error: ${j.errors.map(e => e.message).join(', ')}`;
+        const d = j.data;
+        if (action === 'list_teams') return d.teams.nodes.map(t => `${t.name} (${t.key}) — id: ${t.id}`).join('\n');
+        if (action === 'list_issues') return d.issues.nodes.map(i => `${i.identifier} [${i.state.name}] ${i.title}${i.assignee ? ' — ' + i.assignee.name : ''}\n  ${i.url}`).join('\n');
+        if (action === 'get_issue') {
+          const i = d.issue;
+          let out = `${i.identifier}: ${i.title}\nStatus: ${i.state.name}${i.assignee ? ' | Assignee: ' + i.assignee.name : ''}\n\n${i.description || '(no description)'}`;
+          if (i.comments?.nodes?.length) out += '\n\nComments:\n' + i.comments.nodes.map(c => `[${c.user.name}] ${c.body}`).join('\n');
+          return out;
+        }
+        if (action === 'create_issue') return `Created: ${d.issueCreate.issue.identifier} — ${d.issueCreate.issue.url}`;
       }
       return `Unknown tool: ${name}`;
     } catch (err) {

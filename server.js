@@ -80,6 +80,82 @@ app.post('/api/run', (req, res) => {
   }
 });
 
+// Fetch a URL and return readable text
+app.get('/api/fetch', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url required' });
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'TankGirlOS/1.0' },
+      signal: AbortSignal.timeout(15000),
+    });
+    const contentType = r.headers.get('content-type') || '';
+    let text = await r.text();
+    // Strip HTML tags to plain text so the model gets something readable
+    if (contentType.includes('html')) {
+      text = text
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\s{3,}/g, '\n\n')
+        .trim()
+        .slice(0, 20000); // cap at 20k chars
+    }
+    res.json({ text, status: r.status, url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Slack API proxy — keeps your token server-side
+app.post('/api/slack', async (req, res) => {
+  try {
+    const { token, method, params = {} } = req.body;
+    if (!token) return res.status(400).json({ error: 'token required' });
+    if (!method) return res.status(400).json({ error: 'method required' });
+    const url = `https://slack.com/api/${method}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify(params),
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await r.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Linear GraphQL proxy
+app.post('/api/linear', async (req, res) => {
+  try {
+    const { key, query, variables = {} } = req.body;
+    if (!key) return res.status(400).json({ error: 'key required' });
+    if (!query) return res.status(400).json({ error: 'query required' });
+    const r = await fetch('https://api.linear.app/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': key,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await r.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, HOST, () => {
   console.log(`Tank Girl OS server running at http://${HOST}:${PORT}`);
   console.log(`Serving files from: ${process.cwd()}`);
