@@ -338,7 +338,7 @@
 
     <div class="messages" id="messages">
       <div class="msg tank" id="welcomeMsg">
-        <div class="speaker" id="welcomeSpeaker">[ TANK_GIRL ]</div>
+        <div class="speaker" id="welcomeSpeaker">[ INCREDIBLE_HULK ]</div>
         <div class="text" id="welcomeText">"HULK READY. Before we smash anything —"<br/>
           <span style="color:var(--accent2);">&gt; Click ⚙ (top right) to add your Fireworks API key</span><br/>
           <span style="color:var(--accent2);">&gt; Click the avatar (right panel) to upload a character image</span><br/>
@@ -639,7 +639,7 @@
   const state = {
     messages: [], // {role, content} for API
     tokenCount: 0,
-    characterName: 'TANK_GIRL',
+    characterName: 'INCREDIBLE_HULK',
     isStreaming: false,
     summary: '',
     compareMode: false,
@@ -1414,7 +1414,7 @@
   // --- Fireworks AI streaming ---
   function buildSystemMessage() {
     const mood = MOODS[currentMood];
-    const name = appConfig.charName || 'TANK GIRL';
+    const name = appConfig.charName || 'INCREDIBLE HULK';
     let system;
     if (mood.useBio) {
       const bio = appConfig.bio ? `\n${appConfig.bio}` : '';
